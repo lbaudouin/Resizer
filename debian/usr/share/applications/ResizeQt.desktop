@@ -1,0 +1,12 @@
+
+[Desktop Entry]
+Name=ResizeQt
+Name[fr_FR]=ResizeQt
+Comment=Resize image files
+Comment[fr_FR]=Redimentionne les images
+Exec=ResizeQt
+Icon=ResizeQt
+Type=Application
+Terminal=false
+MimeType=image/jpeg
+Categories=Graphics;

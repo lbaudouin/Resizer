@@ -9,21 +9,30 @@
 #include <QFileIconProvider>
 #include <QLabel>
 #include <QGridLayout>
+#include <QProgressDialog>
+#include <QPainter>
+#include <QMessageBox>
 
-#include <opencv/cv.h>
+#include "qexifimageheader/qexifimageheader.h"
+
+#define VERSION "0.0.5"
+
+/*#include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include <exiv2/image.hpp>
-#include <exiv2/exif.hpp>
+#include <exiv2/exif.hpp>*/
 
 namespace Ui {
 class Resize;
 }
 
 struct Image{
-    cv::Mat original;
+    //cv::Mat original;
+    QImage original;
     QPixmap preview;
     QString folder;
     QString filename;
+    QFileInfo fileinfo;
 };
 
 class Resize : public QMainWindow
@@ -49,8 +58,9 @@ private:
 protected:
     void setList(QStringList paths);
 
-    void rotate(cv::Mat &img, int mode);
+    /*void rotate(cv::Mat &img, int mode);
     cv::Mat createSmall(cv::Mat &img, int size);
+    void addLogo(cv::Mat &img, cv::Mat &logo);*/
 
     int readOrientation(QString filepath);
 
@@ -77,6 +87,8 @@ public slots:
     void setSizeMode(bool);
 
     void openLogo();
+
+    void pressAbout();
 
 signals:
     void needToShow();

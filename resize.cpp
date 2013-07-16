@@ -26,7 +26,7 @@ Resize::Resize(QWidget *parent) :
     label->show();*/
 
     QStringList listSize;
-    listSize << "320" << "480" << "600" << "720" << "800" << "1024" << "1280" << "2048" << "4096";
+    listSize << "320" << "480" << "640" << "720" << "800" << "1024" << "1280" << "2048" << "4096";
     ui->comboPixels->addItems( listSize );
     ui->comboPixels->setCurrentIndex(5);
     QStringList listRatio;
@@ -35,18 +35,24 @@ Resize::Resize(QWidget *parent) :
     ui->comboRatio->setCurrentIndex(3);
 
 
+
     connect(ui->buttonOpenFolder,SIGNAL(pressed()),this,SLOT(pressOpenFolder()));
     connect(ui->buttonOpenFiles,SIGNAL(pressed()),this,SLOT(pressOpenFiles()));
+    connect(ui->actionAdd_folder,SIGNAL(triggered()),this,SLOT(pressOpenFolder()));
+    connect(ui->actionAdd_files,SIGNAL(triggered()),this,SLOT(pressOpenFiles()));
+
     connect(ui->comboPixels,SIGNAL(currentIndexChanged(QString)),this,SLOT(comboPixels(QString)));
     connect(ui->comboRatio,SIGNAL(currentIndexChanged(QString)),this,SLOT(comboRatio(QString)));
 
     connect(ui->groupRatio,SIGNAL(clicked(bool)),this,SLOT(setRatioMode(bool)));
     connect(ui->groupSize,SIGNAL(clicked(bool)),this,SLOT(setSizeMode(bool)));
 
-    /*QButtonGroup *buttonGroup1 = new QButtonGroup;
-    buttonGroup1->addButton(ui->groupRatio);
-    buttonGroup1->addButton(ui->groupSize);
-    buttonGroup1->setExclusive(true);*/
+    connect(ui->toolButton,SIGNAL(clicked()),this,SLOT(openLogo()));
+
+    /*QButtonGroup *buttonGroup = new QButtonGroup;
+    buttonGroup->addButton(ui->radioTopLeft);
+    buttonGroup->addButton(ui->radioBottomRight);
+    buttonGroup->setExclusive(true);*/
 
     QFileIconProvider icons;
     ui->buttonOpenFiles->setText("");
@@ -54,8 +60,22 @@ Resize::Resize(QWidget *parent) :
     ui->buttonOpenFiles->setIcon(icons.icon(QFileIconProvider::File));
     ui->buttonOpenFolder->setIcon(icons.icon(QFileIconProvider::Folder));
 
+
+    ui->actionAdd_files->setIcon(icons.icon(QFileIconProvider::File));
+    ui->actionAdd_folder->setIcon(icons.icon(QFileIconProvider::Folder));
+
     connect(ui->buttonBox,SIGNAL(rejected()),this,SLOT(close()));
     connect(ui->buttonBox,SIGNAL(accepted()),this,SLOT(resizeAll()));
+
+
+    if(QFile::exists(QDir::homePath() + "/Images/logo.png")){
+        logoPath = QDir::homePath() + "/Images/logo.png";
+        //qDebug() << logoPath;
+        QPixmap pix(logoPath);
+        ui->labelLogo->setPixmap(pix.scaled(400,200,Qt::KeepAspectRatio));
+    }
+
+    connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(pressAbout()));
 }
 
 Resize::~Resize()
@@ -116,10 +136,42 @@ void Resize::editPixels(QString str)
 
 void Resize::addList(QStringList paths)
 {
+    QProgressDialog *diag = new QProgressDialog(tr("Loading"),tr("Cancel"),0,paths.size()-1,this);
+    if(paths.size()>1)
+        diag->show();
+
     for(int i=0;i<paths.size();i++){
         QString filepath = paths[i];
 
         QFileInfo fi(filepath);
+
+        QImage imageQt(filepath);
+        QImage smallQt = imageQt.scaled(320,320,Qt::KeepAspectRatio);
+
+        bool rotateNeeded = ui->checkRotate->isChecked();
+
+        QTransform transform;
+        if(rotateNeeded){
+            int orientation = readOrientation(filepath);
+
+            switch(orientation){
+            case 6: transform.rotate(90); break;
+            case 3: transform.rotate(180); break;
+            case 8: transform.rotate(270); break;
+            default: rotateNeeded = false;
+            }
+        }
+
+        QPixmap pix;
+        if(rotateNeeded){
+            QImage rotatedQt = smallQt.transformed(transform);
+            pix = QPixmap::fromImage(rotatedQt);
+        }else{
+            pix = QPixmap::fromImage(smallQt);
+        }
+
+
+/*
 
         cv::Mat img = cv::imread(filepath.toStdString());
         cv::Mat icon = createSmall(img,320);
@@ -128,16 +180,20 @@ void Resize::addList(QStringList paths)
         rotate(icon,orientation);
 
         cv::imwrite("/tmp/tmp.jpg",icon);
-        QPixmap pix("/tmp/tmp.jpg");
+        QPixmap pix("/tmp/tmp.jpg");*/
+
+
 
         QLabel *label = new QLabel;
         label->setPixmap(pix);
 
         Image image;
-        image.original = img;
+        //image.original = img;
+        image.original = imageQt;
         image.preview = pix;
         image.folder = fi.absoluteDir().path();
         image.filename = fi.fileName();
+        image.fileinfo = fi;
 
         int k = mapImages.size();
 
@@ -146,7 +202,11 @@ void Resize::addList(QStringList paths)
         mapImages.insert(fi.absoluteFilePath(),image);
 
         files.push_back(fi.absoluteFilePath());
+
+
+        diag->setValue( diag->value()+1 );
     }
+    diag->close();
 }
 
 void Resize::addFile(QString filepath)
@@ -214,6 +274,21 @@ void Resize::comboRatio(QString)
 
 int Resize::readOrientation(QString filepath)
 {
+    if(QFile::exists(filepath)){
+        return QExifImageHeader(filepath).value(QExifImageHeader::Orientation).toShort();
+    }
+    return 0;
+    /*
+    if(QExifImageHeader(fileName).value(QExifImageHeader::Orientation).toShort() == 6)
+        thumbRotation = 90;
+    else if(QExifImageHeader(fileName).value(QExifImageHeader::Orientation).toShort() == 3)
+        thumbRotation = 180;
+    else if(QExifImageHeader(fileName).value(QExifImageHeader::Orientation).toShort() == 8)
+        thumbRotation = 270;
+    else
+        thumbRotation = 0;*/
+
+    /*
     Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(filepath.toStdString().c_str());
     if(image.get() == 0)
         return 0;
@@ -233,9 +308,9 @@ int Resize::readOrientation(QString filepath)
       if(im->key() == "Exif.Image.Orientation"){
         mode = im->value().toLong();
       }
-    }
+    }*/
 }
-
+/*
 void Resize::rotate(cv::Mat &img, int mode)
 {
     switch(mode){
@@ -265,7 +340,8 @@ void Resize::rotate(cv::Mat &img, int mode)
       break;
     }
 }
-
+*/
+/*
 cv::Mat Resize::createSmall(cv::Mat &img, int size)
 {
     int height = img.rows;
@@ -289,47 +365,180 @@ cv::Mat Resize::createSmall(cv::Mat &img, int size)
 
     return small;
 }
-
+*/
 void Resize::openLogo()
 {
     logoPath = QFileDialog::getOpenFileName(this,tr("Select Logo"),"",tr("Image files (*.jpg *.jpeg *.png)"));
+
+    if(logoPath.isEmpty()){
+        ui->labelLogo->setText(tr("Logo"));
+    }else{
+        QPixmap pix(logoPath);
+        ui->labelLogo->setPixmap(pix.scaled(400,200,Qt::KeepAspectRatio));
+    }
 }
+/*
+void Resize::addLogo(cv::Mat &img, cv::Mat &logo)
+{
+  IplImage *logo = cvLoadImage("/var/local/logo_lulu.png");
+
+  int offsetx = 400;
+  int offsety = 100;
+
+  for(int i=0;i<logo->width;i++){
+    for(int j=0;j<logo->height;j++){
+      int x = img->width-offsetx+i;
+      int y = img->height-offsety+j;
+      CvScalar piximg = cvGet2D(img,y,x);
+      CvScalar pixlogo = cvGet2D(logo,j,i);
+      int minimal1 = 25;
+      int minimal2 = 45;
+      double val = pixlogo.val[0];
+      if(val>minimal1){
+    CvScalar pix;
+    pix.val[0] = 31;
+    pix.val[1] = 45;
+    pix.val[2] = 93;
+    for(int k=0;k<3;k++)
+      pix.val[k] *= 0.75;
+
+    if(val<minimal2){
+      for(int k=0;k<3;k++)
+        pix.val[k] = 0.5 * (pix.val[k] + piximg.val[k]);
+    }
+    cvSet2D(img,y,x,pix);
+      }
+    }
+  }
+  cvReleaseImage(&logo);
+}*/
 
 void Resize::resizeAll()
 {
+
     bool ok;
     int maxSize = ui->comboPixels->currentText().toInt(&ok);
-    if(ui->groupSize->isChecked() && !ok){
+    if(!ui->checkNotResize->isChecked() && ui->groupSize->isChecked() && !ok){
         //TODO, display error
         return;
     }
 
     QStringList files = mapImages.keys();
 
+
+    QProgressDialog *diag = new QProgressDialog(tr("Progress"),tr("Cancel"),0,files.size()-1,this);
+    diag->show();
+
+
     foreach(QString file, files){
         Image img = mapImages[file];
+
+        /*QExifImageHeader exif(img.fileinfo.absoluteFilePath());
+
+        QList<QExifImageHeader::ImageTag> list1 = exif.imageTags();
+        QList<QExifImageHeader::ExifExtendedTag> list2 = exif.extendedTags();
+        QList<QExifImageHeader::GpsTag> list3 = exif.gpsTags();
+
+        for(int i=0;i<list1.size();i++){
+            qDebug() << exif.value(list1[i]).toString();
+        }
+        for(int i=0;i<list2.size();i++){
+            qDebug() << exif.value(list2[i]).toString();
+        }
+        for(int i=0;i<list3.size();i++){
+            qDebug() << exif.value(list3[i]).toString();
+        }*/
+
 
         QString output = img.folder + QDir::separator() + "Small" + QDir::separator() + img.filename;
 
         QDir dir(img.folder);
         dir.mkpath(img.folder + QDir::separator() + "Small");
 
-        cv::Mat small;
-        if(ui->groupSize->isChecked()){
-            small = createSmall(img.original,maxSize);
+        //cv::Mat small;
+        QImage small;
+
+        if(ui->checkNotResize->isChecked()){
+            small = img.original;
         }else{
-            int dimMax = std::max(img.original.rows,img.original.cols);
-            small = createSmall(img.original, (double) dimMax * ui->comboRatio->currentText().toInt() / 100.0 );
+            if(ui->groupSize->isChecked()){
+                //small = createSmall(img.original,maxSize);
+                small = img.original.scaled(maxSize,maxSize,Qt::KeepAspectRatio);
+            }else{
+                int dimMax = std::max(img.original.width(),img.original.height());
+                int newSize = (double) dimMax * ui->comboRatio->currentText().toInt() / 100.0;
+                //small = createSmall(img.original, (double) dimMax * ui->comboRatio->currentText().toInt() / 100.0 );
+                small = img.original.scaled(newSize,newSize,Qt::KeepAspectRatio);
+            }
         }
 
-        cv::imwrite(output.toStdString(),small);
+        bool rotateNeeded = ui->checkRotate->isChecked();
+
+        QTransform transform;
+        if(rotateNeeded){
+            int orientation = readOrientation(img.fileinfo.absoluteFilePath());
+
+            switch(orientation){
+            case 6: transform.rotate(90); break;
+            case 3: transform.rotate(180); break;
+            case 8: transform.rotate(270); break;
+            default: rotateNeeded = false;
+            }
+            small = small.transformed(transform);
+
+        }
+
+        if(ui->groupLogo->isChecked() && !logoPath.isEmpty() && QFile::exists(logoPath)){
+            bool ok_X,ok_Y;
+
+            int posX = ui->posXLineEdit->text().toInt(&ok_X);
+            int posY = ui->posXLineEdit->text().toInt(&ok_Y);
+
+
+
+            if(ok_X && ok_Y){
+                QImage logo(logoPath);
+
+                if(ui->radioBottomRight->isChecked()){
+                    posX = small.width() - logo.width() - posX;
+                    posY = small.height() - logo.height() - posY;
+                }
+
+                QPainter painter(&small);
+                painter.drawImage(posX,posY,logo);
+                painter.end();
+            }
+        }
+
+        small.save(output);
+
+
+
+        //exif.setValue(QExifImageHeader::Orientation,0);
+        //exif.setValue(QExifImageHeader::ImageWidth,small.width());
+        //exif.setValue(QExifImageHeader::ImageLength,small.height());
+
+        //qDebug() << exif.saveToJpeg(output);
+
+
+        //cv::imwrite(output.toStdString(),small);
         qDebug() << output;
+
+        diag->setValue( diag->value()+1 );
     }
 
+    diag->close();
     this->close();
 }
 
-
+void Resize::pressAbout()
+{
+    QMessageBox *mess = new QMessageBox(this);
+    mess->setWindowTitle(tr("About"));
+    mess->setText(tr("Written by %1 (%2)\nVersion: %3","author, year, version").arg(QString::fromUtf8("Léo Baudouin"),"2013",VERSION));
+    mess->setIcon(QMessageBox::Information);
+    mess->exec();
+}
 
 
 
@@ -353,6 +562,7 @@ void Resize::handleMessage(const QString& message)
 
     switch(action) {
     case Print:
+        QMessageBox::information(this,tr("Information"),filename);
     break;
 
     case Open:

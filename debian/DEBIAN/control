@@ -1,9 +1,9 @@
 Package: ResizeQt
-Version: 0.0.1
+Version: 0.0.5
 Section: graphics
 Priority: optional
 Architecture: all
-Depends: libqtcore4,libqtgui4,libqt4-xml,libexiv2-11
-Installed-Size: 200
+Depends: libqtcore4,libqtgui4,libqt4-xml
+Installed-Size: 221
 Maintainer: Léo Baudouin <baudouin.leo@gmail.com>
 Description: Resize images

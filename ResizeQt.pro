@@ -4,18 +4,25 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui #declarative
 
 TARGET = ResizeQt
 TEMPLATE = app
 
-LIBS += -lexiv2 `pkg-config opencv --libs --cflags`
+TRANSLATIONS = ResizeQt_fr.ts
+
+#LIBS += -lexiv2 `pkg-config opencv --libs --cflags`
 
 SOURCES += main.cpp\
-        resize.cpp
+        resize.cpp \
+    qexifimageheader/qexifimageheader.cpp
 
-HEADERS  += resize.h
+HEADERS  += resize.h \
+    qexifimageheader/qexifimageheader.h
 
 FORMS    += resize.ui
 
 include(qtsingleapplication/qtsingleapplication.pri)
+
+RESOURCES += \
+    ressources.qrc

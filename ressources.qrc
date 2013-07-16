@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/images">
+        <file alias="close">images/app-close.png</file>
+        <file alias="help">images/help.png</file>
+        <file alias="hint">images/hint.png</file>
+        <file alias="info">images/info.png</file>
+    </qresource>
+    <qresource prefix="/lang">
+        <file alias="lang_fr">ResizeQt_fr.qm</file>
+    </qresource>
+</RCC>

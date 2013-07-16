@@ -1,12 +1,16 @@
-
 [Desktop Entry]
+Version=0.5
 Name=ResizeQt
 Name[fr_FR]=ResizeQt
 Comment=Resize image files
 Comment[fr_FR]=Redimentionne les images
-Exec=ResizeQt
+Keywords=resize;image;images;photo;photos;picture;pictures;
+Exec=ResizeQt %U
 Icon=ResizeQt
 Type=Application
 Terminal=false
-MimeType=image/jpeg
-Categories=Graphics;
+MimeType=image/bmp;image/gif;image/jpeg;image/jpg;image/pjpeg;image/png;image/tiff;image/x-bmp;image/x-gray;image/x-icb;image/x-ico;image/x-png;image/x-portable-anymap;image/x-portable-bitmap;image/x-portable-graymap;image/x-portable-pixmap;image/x-xbitmap;image/x-xpixmap;image/x-pcx;image/svg+xml;image/svg+xml-compressed;image/vnd.wap.wbmp;x-content/image-dcf;
+Categories=Graphics,Photography;
+# Extra keywords that can be used to search for ResizeQt in GNOME Shell and Unity
+Keywords=Picture;Slideshow;Graphics;
+

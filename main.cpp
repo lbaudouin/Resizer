@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 
     QString message;
     for(int a = 1; a < argc; ++a) {
-        message += QString::fromUtf8(argv[a]);
+        message += QString::fromLocal8Bit(argv[a]);
         if (a < argc-1)
             message += " ";
     }

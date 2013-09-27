@@ -4,6 +4,8 @@
         <file alias="help">images/help.png</file>
         <file alias="hint">images/hint.png</file>
         <file alias="info">images/info.png</file>
+        <file alias="folder">images/folder.png</file>
+        <file alias="pictures">images/pictures.png</file>
     </qresource>
     <qresource prefix="/lang">
         <file alias="lang_fr">ResizeQt_fr.qm</file>

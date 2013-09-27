@@ -54,15 +54,14 @@ Resize::Resize(QWidget *parent) :
     buttonGroup->addButton(ui->radioBottomRight);
     buttonGroup->setExclusive(true);*/
 
-    QFileIconProvider icons;
     ui->buttonOpenFiles->setText("");
     ui->buttonOpenFolder->setText("");
-    ui->buttonOpenFiles->setIcon(icons.icon(QFileIconProvider::File));
-    ui->buttonOpenFolder->setIcon(icons.icon(QFileIconProvider::Folder));
+    ui->buttonOpenFiles->setIcon(QIcon(":images/pictures"));
+    ui->buttonOpenFolder->setIcon(QIcon(":images/folder"));
 
 
-    ui->actionAdd_files->setIcon(icons.icon(QFileIconProvider::File));
-    ui->actionAdd_folder->setIcon(icons.icon(QFileIconProvider::Folder));
+    ui->actionAdd_files->setIcon(QIcon(":images/pictures"));
+    ui->actionAdd_folder->setIcon(QIcon(":images/folder"));
 
     connect(ui->buttonBox,SIGNAL(rejected()),this,SLOT(close()));
     connect(ui->buttonBox,SIGNAL(accepted()),this,SLOT(resizeAll()));
@@ -181,8 +180,6 @@ void Resize::addList(QStringList paths)
 
         cv::imwrite("/tmp/tmp.jpg",icon);
         QPixmap pix("/tmp/tmp.jpg");*/
-
-
 
         QLabel *label = new QLabel;
         label->setPixmap(pix);

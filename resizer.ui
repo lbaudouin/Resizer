@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Resize</class>
- <widget class="QMainWindow" name="Resize">
+ <class>Resizer</class>
+ <widget class="QMainWindow" name="Resizer">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Resize</string>
+   <string>Resizer</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -525,7 +525,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>Resize</receiver>
+   <receiver>Resizer</receiver>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">

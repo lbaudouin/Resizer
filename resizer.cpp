@@ -1,36 +1,18 @@
-#include "resize.h"
-#include "ui_resize.h"
+#include "resizer.h"
+#include "ui_resizer.h"
 
-Resize::Resize(QWidget *parent) :
+Resizer::Resizer(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::Resize)
+    ui(new Ui::Resizer)
 {
     ui->setupUi(this);
-
-    /*QImage img("/home/killo/Images/test.jpg");
-    QStringList tags = img.textKeys();
-    qDebug() << tags.size();
-    for(int i=0;i<tags.size();i++){
-        qDebug() << tags.at(i) << " " << img.text( tags.at(i) );
-    }
-
-    QImageWriter writer;
-    writer.setFormat("jpg");
-    if (writer.supportsOption(QImageIOHandler::Description))
-        qDebug() << "Jpg supports embedded text";
-    else
-        qDebug() << "Jpg do not supports embedded text";
-
-    QLabel *label = new QLabel;
-    label->setPixmap( QPixmap::fromImage(img).scaledToWidth(1024) );
-    label->show();*/
 
     QStringList listSize;
     listSize << "320" << "480" << "640" << "720" << "800" << "1024" << "1280" << "2048" << "4096";
     ui->comboPixels->addItems( listSize );
     ui->comboPixels->setCurrentIndex(5);
     QStringList listRatio;
-    listRatio << "10" << "20" << "30" << "33" << "40" << "50" << "60" << "66" << "70" << "80" << "90";
+    listRatio << "10" << "20" << "30" << "33" << "40" << "50" << "60" << "66" << "70" << "80" << "90" << "125" << "150" << "200" << "250" << "300";
     ui->comboRatio->addItems( listRatio );
     ui->comboRatio->setCurrentIndex(3);
 
@@ -41,8 +23,7 @@ Resize::Resize(QWidget *parent) :
     connect(ui->actionAdd_folder,SIGNAL(triggered()),this,SLOT(pressOpenFolder()));
     connect(ui->actionAdd_files,SIGNAL(triggered()),this,SLOT(pressOpenFiles()));
 
-    connect(ui->comboPixels,SIGNAL(currentIndexChanged(QString)),this,SLOT(comboPixels(QString)));
-    connect(ui->comboRatio,SIGNAL(currentIndexChanged(QString)),this,SLOT(comboRatio(QString)));
+    ui->comboPixels->lineEdit()->setInputMask("9999");
 
     connect(ui->groupRatio,SIGNAL(clicked(bool)),this,SLOT(setRatioMode(bool)));
     connect(ui->groupSize,SIGNAL(clicked(bool)),this,SLOT(setSizeMode(bool)));
@@ -69,7 +50,6 @@ Resize::Resize(QWidget *parent) :
 
     if(QFile::exists(QDir::homePath() + "/Images/logo.png")){
         logoPath = QDir::homePath() + "/Images/logo.png";
-        //qDebug() << logoPath;
         QPixmap pix(logoPath);
         ui->labelLogo->setPixmap(pix.scaled(400,200,Qt::KeepAspectRatio));
     }
@@ -77,22 +57,22 @@ Resize::Resize(QWidget *parent) :
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(pressAbout()));
 }
 
-Resize::~Resize()
+Resizer::~Resizer()
 {
     delete ui;
 }
 
-void Resize::setRatioMode(bool ratioMode)
+void Resizer::setRatioMode(bool ratioMode)
 {
     ui->groupSize->setChecked(!ratioMode);
 }
 
-void Resize::setSizeMode(bool sizeMode)
+void Resizer::setSizeMode(bool sizeMode)
 {
     ui->groupRatio->setChecked(!sizeMode);
 }
 
-void Resize::pressOpenFolder()
+void Resizer::pressOpenFolder()
 {
     QString path = QFileDialog::getExistingDirectory(this,tr("Select a Folder"),QDir::homePath());
     if(path.isEmpty()) return;
@@ -105,9 +85,9 @@ void Resize::pressOpenFolder()
     addList(absoluteFilepaths);
 }
 
-void Resize::pressOpenFiles()
+void Resizer::pressOpenFiles()
 {
-    QStringList paths = QFileDialog::getOpenFileNames(this,tr("Select Files"),QDir::homePath(), tr("Image files (*.jpg *.jpeg)"));
+    QStringList paths = QFileDialog::getOpenFileNames(this,tr("Select Files"),QDir::homePath(), tr("Image files (*.jpg *.jpeg *.png)"));
     if(paths.isEmpty()) return;
     QStringList absoluteFilepaths;
     for(int i=0;i<paths.size();i++){
@@ -117,23 +97,7 @@ void Resize::pressOpenFiles()
     addList(absoluteFilepaths);
 }
 
-void Resize::editPixels(QString str)
-{
-    /*ui->radioEditPixels->setChecked(true);
-    bool ok = false;
-    str.toInt(&ok);
-    if(!ok){
-        QPalette palette;
-        palette.setColor(QPalette::Text, Qt::red);
-        ui->editPixels->setPalette(palette);
-    }else{
-        QPalette palette;
-        palette.setColor(QPalette::Text, Qt::black);
-        ui->editPixels->setPalette(palette);
-    }*/
-}
-
-void Resize::addList(QStringList paths)
+void Resizer::addList(QStringList paths)
 {
     QProgressDialog *diag = new QProgressDialog(tr("Loading"),tr("Cancel"),0,paths.size()-1,this);
     if(paths.size()>1)
@@ -169,18 +133,6 @@ void Resize::addList(QStringList paths)
             pix = QPixmap::fromImage(smallQt);
         }
 
-
-/*
-
-        cv::Mat img = cv::imread(filepath.toStdString());
-        cv::Mat icon = createSmall(img,320);
-
-        int orientation = readOrientation(filepath);
-        rotate(icon,orientation);
-
-        cv::imwrite("/tmp/tmp.jpg",icon);
-        QPixmap pix("/tmp/tmp.jpg");*/
-
         QLabel *label = new QLabel;
         label->setPixmap(pix);
 
@@ -206,12 +158,12 @@ void Resize::addList(QStringList paths)
     diag->close();
 }
 
-void Resize::addFile(QString filepath)
+void Resizer::addFile(QString filepath)
 {
     addList(QStringList() << filepath);
 }
 
-void Resize::removeFile(QString filepath)
+void Resizer::removeFile(QString filepath)
 {
     QFileInfo fi(filepath);
 
@@ -221,14 +173,8 @@ void Resize::removeFile(QString filepath)
 
 }
 
-void Resize::repaintGrid()
+void Resizer::repaintGrid()
 {
-    //delete ui->gridLayout_4;
-
-    //ui->gridLayout_4 = new QGridLayout(ui->scrollAreaWidgetContents);
-
-
-
     int k =0;
     foreach(QString file, files){
         Image img = mapImages[file];
@@ -243,33 +189,7 @@ void Resize::repaintGrid()
     }
 }
 
-void Resize::editRatio(QString str)
-{
-    /*ui->radioEditRatio->setChecked(true);
-    bool ok = false;
-    str.toInt(&ok);
-    if(!ok){
-        QPalette palette;
-        palette.setColor(QPalette::Text, Qt::red);
-        ui->editRatio->setPalette(palette);
-    }else{
-        QPalette palette;
-        palette.setColor(QPalette::Text, Qt::black);
-        ui->editRatio->setPalette(palette);
-    }*/
-}
-
-void Resize::comboPixels(QString)
-{
-    //ui->radioComboPixels->setChecked(true);
-}
-
-void Resize::comboRatio(QString)
-{
-    //ui->radioComboRatio->setChecked(true);
-}
-
-int Resize::readOrientation(QString filepath)
+int Resizer::readOrientation(QString filepath)
 {
     if(QFile::exists(filepath)){
         return QExifImageHeader(filepath).value(QExifImageHeader::Orientation).toShort();
@@ -307,63 +227,8 @@ int Resize::readOrientation(QString filepath)
       }
     }*/
 }
-/*
-void Resize::rotate(cv::Mat &img, int mode)
-{
-    switch(mode){
-    case 1:{
-        // 0°
-        break;
-    }
-    case 6:{
-        // 90°
-        cv::transpose(img,img);
-        break;
-    }
-    case 3:{
-        // 180°
-        cv::flip(img,img,-1);
-        cv::flip(img,img,1);
-        break;
-    }
-    case 8:{
-        // 270°
-        cv::transpose(img,img);
-        cv::flip(img,img,-1);
-        cv::flip(img,img,1);
-        break;
-    }
-    default :
-      break;
-    }
-}
-*/
-/*
-cv::Mat Resize::createSmall(cv::Mat &img, int size)
-{
-    int height = img.rows;
-    int width  = img.cols;
 
-    int smallWidth;
-    int smallHeight;
-
-    if(width>height){
-      smallWidth = size;
-      smallHeight = size * height / width;
-    }else{
-      smallWidth =  size * width / height;
-      smallHeight = size;
-    }
-
-    cv::Mat small;// = cv::Mat(smallHeight,smallWidth,img.type());
-    //cv::resize(img,small,cv::Size(smallHeight,smallWidth));
-    cv::resize(img,small,cv::Size(smallWidth,smallHeight));
-
-
-    return small;
-}
-*/
-void Resize::openLogo()
+void Resizer::openLogo()
 {
     logoPath = QFileDialog::getOpenFileName(this,tr("Select Logo"),"",tr("Image files (*.jpg *.jpeg *.png)"));
 
@@ -374,43 +239,8 @@ void Resize::openLogo()
         ui->labelLogo->setPixmap(pix.scaled(400,200,Qt::KeepAspectRatio));
     }
 }
-/*
-void Resize::addLogo(cv::Mat &img, cv::Mat &logo)
-{
-  IplImage *logo = cvLoadImage("/var/local/logo_lulu.png");
 
-  int offsetx = 400;
-  int offsety = 100;
-
-  for(int i=0;i<logo->width;i++){
-    for(int j=0;j<logo->height;j++){
-      int x = img->width-offsetx+i;
-      int y = img->height-offsety+j;
-      CvScalar piximg = cvGet2D(img,y,x);
-      CvScalar pixlogo = cvGet2D(logo,j,i);
-      int minimal1 = 25;
-      int minimal2 = 45;
-      double val = pixlogo.val[0];
-      if(val>minimal1){
-    CvScalar pix;
-    pix.val[0] = 31;
-    pix.val[1] = 45;
-    pix.val[2] = 93;
-    for(int k=0;k<3;k++)
-      pix.val[k] *= 0.75;
-
-    if(val<minimal2){
-      for(int k=0;k<3;k++)
-        pix.val[k] = 0.5 * (pix.val[k] + piximg.val[k]);
-    }
-    cvSet2D(img,y,x,pix);
-      }
-    }
-  }
-  cvReleaseImage(&logo);
-}*/
-
-void Resize::resizeAll()
+void Resizer::resizeAll()
 {
 
     bool ok;
@@ -528,7 +358,7 @@ void Resize::resizeAll()
     this->close();
 }
 
-void Resize::pressAbout()
+void Resizer::pressAbout()
 {
     QMessageBox *mess = new QMessageBox(this);
     mess->setWindowTitle(tr("About"));
@@ -538,9 +368,7 @@ void Resize::pressAbout()
 }
 
 
-
-
-void Resize::handleMessage(const QString& message)
+void Resizer::handleMessage(const QString& message)
 {
     enum Action { Nothing, Open, Print } action;
 

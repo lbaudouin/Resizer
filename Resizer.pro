@@ -6,21 +6,23 @@
 
 QT       += core gui #declarative
 
-TARGET = ResizeQt
+TARGET = Resizer
 TEMPLATE = app
 
-TRANSLATIONS = ResizeQt_fr.ts
+TRANSLATIONS = Resizer_fr.ts
 
 #LIBS += -lexiv2 `pkg-config opencv --libs --cflags`
 
 SOURCES += main.cpp\
-        resize.cpp \
-    qexifimageheader/qexifimageheader.cpp
+    qexifimageheader/qexifimageheader.cpp \
+    resizer.cpp
 
-HEADERS  += resize.h \
-    qexifimageheader/qexifimageheader.h
+HEADERS  += \
+    qexifimageheader/qexifimageheader.h \
+    resizer.h
 
-FORMS    += resize.ui
+FORMS    += \
+    resizer.ui
 
 include(qtsingleapplication/qtsingleapplication.pri)
 

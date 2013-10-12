@@ -17,17 +17,11 @@
 
 #define VERSION "0.0.5"
 
-/*#include <opencv/cv.h>
-#include <opencv/highgui.h>
-#include <exiv2/image.hpp>
-#include <exiv2/exif.hpp>*/
-
 namespace Ui {
-class Resize;
+class Resizer;
 }
 
 struct Image{
-    //cv::Mat original;
     QImage original;
     QPixmap preview;
     QString folder;
@@ -35,16 +29,16 @@ struct Image{
     QFileInfo fileinfo;
 };
 
-class Resize : public QMainWindow
+class Resizer : public QMainWindow
 {
     Q_OBJECT
     
 public:
-    explicit Resize(QWidget *parent = 0);
-    ~Resize();
+    explicit Resizer(QWidget *parent = 0);
+    ~Resizer();
     
 private:
-    Ui::Resize *ui;
+    Ui::Resizer *ui;
     QStringList files;
 
     QMap<QString,Image> mapImages;
@@ -58,10 +52,6 @@ private:
 protected:
     void setList(QStringList paths);
 
-    /*void rotate(cv::Mat &img, int mode);
-    cv::Mat createSmall(cv::Mat &img, int size);
-    void addLogo(cv::Mat &img, cv::Mat &logo);*/
-
     int readOrientation(QString filepath);
 
     void addList(QStringList);
@@ -74,10 +64,6 @@ protected:
 public slots:
     void pressOpenFolder();
     void pressOpenFiles();
-    void editPixels(QString);
-    void editRatio(QString);
-    void comboPixels(QString);
-    void comboRatio(QString);
 
     void resizeAll();
 

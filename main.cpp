@@ -2,12 +2,12 @@
 #include <QTranslator>
 #include <QLibraryInfo>
 #include "qtsingleapplication.h"
-#include "resize.h"
+#include "resizer.h"
 
 int main(int argc, char *argv[])
 {
 
-    QtSingleApplication instance("Resize", argc, argv);
+    QtSingleApplication instance("Resizer", argc, argv);
 
     QString message;
     for(int a = 1; a < argc; ++a) {
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
         qApp->installTranslator( translatorQt );
     }
 
-    Resize w;
+    Resizer w;
     w.handleMessage(message);
     w.show();
 

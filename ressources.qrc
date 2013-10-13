@@ -8,6 +8,6 @@
         <file alias="pictures">images/pictures.png</file>
     </qresource>
     <qresource prefix="/lang">
-        <file>Resizer_fr.qm</file>
+        <file alias="lang_fr">resizer_fr.qm</file>
     </qresource>
 </RCC>

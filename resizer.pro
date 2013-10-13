@@ -6,10 +6,10 @@
 
 QT       += core gui #declarative
 
-TARGET = Resizer
+TARGET = resizer
 TEMPLATE = app
 
-TRANSLATIONS = Resizer_fr.ts
+TRANSLATIONS = resizer_fr.ts
 
 #LIBS += -lexiv2 `pkg-config opencv --libs --cflags`
 

@@ -6,14 +6,15 @@
 
 int main(int argc, char *argv[])
 {
-
-    QtSingleApplication instance("Resizer", argc, argv);
+    QCoreApplication::setApplicationName( "resizer" );
+    QtSingleApplication instance("resizer", argc, argv);
 
     QString message;
+    if(argc)
     for(int a = 1; a < argc; ++a) {
         message += QString::fromLocal8Bit(argv[a]);
         if (a < argc-1)
-            message += " ";
+            message += "\n";
     }
 
     if(instance.sendMessage(message))

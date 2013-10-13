@@ -48,8 +48,9 @@ Resizer::Resizer(QWidget *parent) :
     connect(ui->buttonBox,SIGNAL(accepted()),this,SLOT(resizeAll()));
 
 
-    if(QFile::exists(QDir::homePath() + "/Images/logo.png")){
-        logoPath = QDir::homePath() + "/Images/logo.png";
+
+    if(QFile::exists(QDesktopServices::storageLocation(QDesktopServices::PicturesLocation) + QDir::separator() + "logo.png")){
+        logoPath = QDesktopServices::storageLocation(QDesktopServices::PicturesLocation)  + QDir::separator() + "logo.png";
         QPixmap pix(logoPath);
         ui->labelLogo->setPixmap(pix.scaled(400,200,Qt::KeepAspectRatio));
     }
@@ -107,6 +108,19 @@ void Resizer::addList(QStringList paths)
         QString filepath = paths[i];
 
         QFileInfo fi(filepath);
+
+        if(fi.isDir()){
+            QDir dir(filepath);
+            QStringList filenames = dir.entryList(QStringList() << "*.jpg" << "*.JPG"<< "*.jpeg" << "*.JPEG" << "*.png" << "*.PNG");
+
+            QStringList absoluteFilepaths;
+            for(int i=0;i<filenames.size();i++)
+                absoluteFilepaths << dir.absolutePath() + QDir::separator() + filenames.at(i);
+            addList(absoluteFilepaths);
+
+            continue;
+        }
+
 
         QImage imageQt(filepath);
         QImage smallQt = imageQt.scaled(320,320,Qt::KeepAspectRatio);
@@ -392,7 +406,7 @@ void Resizer::handleMessage(const QString& message)
 
     case Open:
     {
-        addFile(filename);
+        addList(filename.split("\n"));
         emit needToShow();
     }
     break;

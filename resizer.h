@@ -12,10 +12,11 @@
 #include <QProgressDialog>
 #include <QPainter>
 #include <QMessageBox>
+#include <QDesktopServices>
 
 #include "qexifimageheader/qexifimageheader.h"
 
-#define VERSION "0.0.5"
+#define VERSION "0.1.1"
 
 namespace Ui {
 class Resizer;

@@ -4,14 +4,12 @@
 #
 #-------------------------------------------------
 
-QT       += core gui #declarative
+QT       += core gui
 
 TARGET = resizer
 TEMPLATE = app
 
 TRANSLATIONS = resizer_fr.ts
-
-#LIBS += -lexiv2 `pkg-config opencv --libs --cflags`
 
 SOURCES += main.cpp\
     qexifimageheader/qexifimageheader.cpp \
@@ -28,3 +26,11 @@ include(qtsingleapplication/qtsingleapplication.pri)
 
 RESOURCES += \
     ressources.qrc
+
+win32 {
+    TARGET = Resizer
+    RC_FILE = resizer.rc
+}
+
+OTHER_FILES += \
+    resizer.rc

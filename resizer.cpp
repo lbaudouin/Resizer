@@ -16,14 +16,22 @@ Resizer::Resizer(QWidget *parent) :
     ui->comboRatio->addItems( listRatio );
     ui->comboRatio->setCurrentIndex(3);
 
+    QIntValidator *validatorNotNull = new QIntValidator(this);
+    validatorNotNull->setRange(8,32768);
+    ui->comboPixels->lineEdit()->setValidator(validatorNotNull);
+
+
+    QIntValidator *validator = new QIntValidator(this);
+    validator->setRange(0,32768);
+    ui->posXLineEdit->setValidator(validator);
+    ui->posYLineEdit->setValidator(validator);
+
 
 
     connect(ui->buttonOpenFolder,SIGNAL(pressed()),this,SLOT(pressOpenFolder()));
     connect(ui->buttonOpenFiles,SIGNAL(pressed()),this,SLOT(pressOpenFiles()));
     connect(ui->actionAdd_folder,SIGNAL(triggered()),this,SLOT(pressOpenFolder()));
     connect(ui->actionAdd_files,SIGNAL(triggered()),this,SLOT(pressOpenFiles()));
-
-    ui->comboPixels->lineEdit()->setInputMask("9999");
 
     connect(ui->groupRatio,SIGNAL(clicked(bool)),this,SLOT(setRatioMode(bool)));
     connect(ui->groupSize,SIGNAL(clicked(bool)),this,SLOT(setSizeMode(bool)));

@@ -1,0 +1,29 @@
+#!/usr/bin/make -f
+
+BUILDDIR = build_dir
+
+# secondly called by launchpad
+build:
+	lrelease *.pro
+	qmake
+	make
+
+# thirdly called by launchpad
+binary: binary-indep binary-arch
+
+binary-indep:
+	# nothing to be done
+
+binary-arch:
+	mkdir -p debian/tmp/DEBIAN
+	mkdir -p debian/tmp/usr/bin/
+	cp resizer debian/tmp/usr/bin/
+	cp -r data/usr/ debian/tmp/
+	dpkg-gencontrol -presizer
+	dpkg --build debian/tmp ..
+
+# firstly called by launchpad
+clean:
+	rm -f build
+
+.PHONY: binary binary-arch binary-indep clean

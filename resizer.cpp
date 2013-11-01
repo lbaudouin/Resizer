@@ -217,37 +217,6 @@ int Resizer::readOrientation(QString filepath)
         return QExifImageHeader(filepath).value(QExifImageHeader::Orientation).toShort();
     }
     return 0;
-    /*
-    if(QExifImageHeader(fileName).value(QExifImageHeader::Orientation).toShort() == 6)
-        thumbRotation = 90;
-    else if(QExifImageHeader(fileName).value(QExifImageHeader::Orientation).toShort() == 3)
-        thumbRotation = 180;
-    else if(QExifImageHeader(fileName).value(QExifImageHeader::Orientation).toShort() == 8)
-        thumbRotation = 270;
-    else
-        thumbRotation = 0;*/
-
-    /*
-    Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(filepath.toStdString().c_str());
-    if(image.get() == 0)
-        return 0;
-
-    image->readMetadata();
-
-    Exiv2::ExifData &exifData = image->exifData();
-    if (exifData.empty()) {
-      std::string error(filepath.toStdString());
-      error += ": No Exif data found in the file";
-      return 0;
-    }
-    Exiv2::ExifData::const_iterator end = exifData.end();
-
-    int mode = 0;
-    for (Exiv2::ExifData::const_iterator im = exifData.begin(); im != end; ++im) {
-      if(im->key() == "Exif.Image.Orientation"){
-        mode = im->value().toLong();
-      }
-    }*/
 }
 
 void Resizer::openLogo()
@@ -384,11 +353,17 @@ void Resizer::pressAbout()
 {
     QMessageBox *mess = new QMessageBox(this);
     mess->setWindowTitle(tr("About"));
-    mess->setText(tr("Written by %1 (%2)\nVersion: %3","author, year, version").arg(QString::fromUtf8("Léo Baudouin"),"2013",VERSION));
+    mess->setText(tr("Written by %1 (%2)\nVersion: %3","author, year, version").arg(QString::fromUtf8("Léo Baudouin"),"2013",version_));
     mess->setIcon(QMessageBox::Information);
     mess->exec();
 }
 
+void Resizer::restart(QString path)
+{
+    QProcess process;
+    process.startDetached("\""+path+"\"");
+    this->close();
+}
 
 void Resizer::handleMessage(const QString& message)
 {

@@ -13,10 +13,9 @@
 #include <QPainter>
 #include <QMessageBox>
 #include <QDesktopServices>
+#include <QProcess>
 
 #include "qexifimageheader/qexifimageheader.h"
-
-#define VERSION "0.1.1"
 
 namespace Ui {
 class Resizer;
@@ -37,7 +36,9 @@ class Resizer : public QMainWindow
 public:
     explicit Resizer(QWidget *parent = 0);
     ~Resizer();
-    
+
+    inline void setVersion(QString version) { version_ = version; }
+
 private:
     Ui::Resizer *ui;
     QStringList files;
@@ -48,7 +49,7 @@ private:
 
     QString logoPath;
 
-    //QGridLayout *gridPreview;
+    QString version_;
 
 protected:
     void setList(QStringList paths);
@@ -76,6 +77,8 @@ public slots:
     void openLogo();
 
     void pressAbout();
+
+    void restart(QString path);
 
 signals:
     void needToShow();

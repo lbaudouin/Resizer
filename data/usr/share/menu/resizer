@@ -1,0 +1,7 @@
+?package(resizer):needs="X11" section="Graphics"\
+  section="Applications/Graphics" \
+  title="Resizer" command="/usr/bin/resizer" \
+  icon="/usr/share/icons/hicolor/64x64/apps/resizer.png" \
+  icon16x16="/usr/share/icons/hicolor/16x16/apps/videolibrary.png" \
+  icon32x32="/usr/share/icons/hicolor/32x32/apps/videolibrary.png"
+

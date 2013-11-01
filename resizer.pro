@@ -28,6 +28,9 @@ RESOURCES += \
     ressources.qrc
 
 win32 {
+    HEADERS += updatemanager/updatemanager.h \
+    updatemanager/qprogressbardialog.h
+    SOURCES += updatemanager/updatemanager.cpp
     TARGET = Resizer
     RC_FILE = resizer.rc
 }

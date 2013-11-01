@@ -1,5 +1,0 @@
-?package(ResizeQt):needs="X11" section="Graphics"\
-  section="Applications/Graphics" \
-  title="ResizeQt" command="/usr/bin/ResizeQt" \
-  icon="/usr/share/icons/hicolor/64x64/apps/ResizeQt.png"
-

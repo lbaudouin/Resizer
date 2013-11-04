@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QDebug>
+#include <QImageReader>
 #include <QImageWriter>
 #include <QImageIOHandler>
 #include <QFileDialog>
@@ -25,11 +26,8 @@ namespace Ui {
 class Resizer;
 }
 
-struct Image{
-    QImage original;
+struct ImageInfo{
     QPixmap preview;
-    QString folder;
-    QString filename;
     QFileInfo fileinfo;
 };
 
@@ -45,11 +43,8 @@ public:
 
 private:
     Ui::Resizer *ui;
-    QStringList files;
 
-    QMap<QString,Image> mapImages;
-
-    QList<Image> listImages;
+    QMap<QString,ImageInfo*> mapImages;
 
     QString logoPath;
 

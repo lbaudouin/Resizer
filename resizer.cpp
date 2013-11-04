@@ -169,9 +169,18 @@ void Resizer::addList(QStringList paths)
             continue;
         }
 
+        QImage small;
 
-        QImage imageQt(filepath);
-        QImage smallQt = imageQt.scaled(320,320,Qt::KeepAspectRatio);
+        QImageReader reader(filepath);
+        QSize imageSize = reader.size();
+
+        if(imageSize.isValid()){
+            imageSize.scale(320,320,Qt::KeepAspectRatio);
+            reader.setScaledSize(imageSize);
+            small = reader.read();
+        }else{
+            small = QImage(filepath).scaled(320,320,Qt::KeepAspectRatio);
+        }
 
         bool rotateNeeded = ui->checkRotate->isChecked();
 
@@ -189,31 +198,24 @@ void Resizer::addList(QStringList paths)
 
         QPixmap pix;
         if(rotateNeeded){
-            QImage rotatedQt = smallQt.transformed(transform);
-            pix = QPixmap::fromImage(rotatedQt);
+            QImage rotated = small.transformed(transform);
+            pix = QPixmap::fromImage(rotated);
         }else{
-            pix = QPixmap::fromImage(smallQt);
+            pix = QPixmap::fromImage(small);
         }
 
         QLabel *label = new QLabel;
         label->setPixmap(pix);
 
-        Image image;
-        //image.original = img;
-        image.original = imageQt;
-        image.preview = pix;
-        image.folder = fi.absoluteDir().path();
-        image.filename = fi.fileName();
-        image.fileinfo = fi;
+        ImageInfo *imageinfo = new ImageInfo;
+        imageinfo->preview = pix;
+        imageinfo->fileinfo = fi;
 
         int k = mapImages.size();
 
         ui->gridLayout_4->addWidget(label,k/5,k%5,Qt::AlignHCenter);
 
-        mapImages.insert(fi.absoluteFilePath(),image);
-
-        files.push_back(fi.absoluteFilePath());
-
+        mapImages.insert(fi.absoluteFilePath(),imageinfo);
 
         diag->setValue( diag->value()+1 );
     }
@@ -232,18 +234,15 @@ void Resizer::removeFile(QString filepath)
     mapImages.remove(fi.absoluteFilePath());
 
     repaintGrid();
-
 }
 
 void Resizer::repaintGrid()
 {
     int k =0;
-    foreach(QString file, files){
-        Image img = mapImages[file];
-
+    foreach(ImageInfo *img, mapImages){
 
         QLabel *label = new QLabel;
-        label->setPixmap( img.preview );
+        label->setPixmap( img->preview );
 
         ui->gridLayout_4->addWidget(label,k/5,k%5,Qt::AlignHCenter);
 
@@ -292,16 +291,13 @@ void Resizer::resizeAll()
         return;
     }
 
-    QStringList files = mapImages.keys();
+    int size = mapImages.size();
 
-
-    QProgressDialog *diag = new QProgressDialog(tr("Progress"),tr("Cancel"),0,files.size()-1,this);
+    QProgressDialog *diag = new QProgressDialog(tr("Progress"),tr("Cancel"),0,size-1,this);
     diag->show();
 
 
-    foreach(QString file, files){
-        Image img = mapImages[file];
-
+    foreach(ImageInfo *img, mapImages){
         /*QExifImageHeader exif(img.fileinfo.absoluteFilePath());
 
         QList<QExifImageHeader::ImageTag> list1 = exif.imageTags();
@@ -318,26 +314,41 @@ void Resizer::resizeAll()
             qDebug() << exif.value(list3[i]).toString();
         }*/
 
+        QString output = img->fileinfo.absoluteDir().absolutePath() + QDir::separator() + "Small" + QDir::separator() + img->fileinfo.fileName();
 
-        QString output = img.folder + QDir::separator() + "Small" + QDir::separator() + img.filename;
+        QDir dir(img->fileinfo.absoluteDir());
+        if(!dir.exists() || !dir.mkpath("Small")){
+            //TODO display only one error
+            //QMessageBox::critical(this,"error","dir");
+            diag->close();
+            return;
+        }
 
-        QDir dir(img.folder);
-        dir.mkpath(img.folder + QDir::separator() + "Small");
-
-        //cv::Mat small;
         QImage small;
 
+        QImageReader reader(img->fileinfo.absoluteFilePath());
+        QSize imageSize = reader.size();
+
         if(ui->checkNotResize->isChecked()){
-            small = img.original;
+            small.load(img->fileinfo.absoluteFilePath());
         }else{
-            if(ui->groupSize->isChecked()){
-                //small = createSmall(img.original,maxSize);
-                small = img.original.scaled(maxSize,maxSize,Qt::KeepAspectRatio);
+            if(imageSize.isValid()){
+                if(ui->groupSize->isChecked()){
+                    imageSize.scale(maxSize,maxSize,Qt::KeepAspectRatio);
+                }else{
+                    imageSize *= (double) ui->comboRatio->currentText().toInt() / 100.0;
+                }
+                reader.setScaledSize(imageSize);
+                small = reader.read();
             }else{
-                int dimMax = std::max(img.original.width(),img.original.height());
-                int newSize = (double) dimMax * ui->comboRatio->currentText().toInt() / 100.0;
-                //small = createSmall(img.original, (double) dimMax * ui->comboRatio->currentText().toInt() / 100.0 );
-                small = img.original.scaled(newSize,newSize,Qt::KeepAspectRatio);
+                QImage original(img->fileinfo.absoluteFilePath());
+                imageSize = original.size();
+                if(ui->groupSize->isChecked()){
+                    imageSize.scale(maxSize,maxSize,Qt::KeepAspectRatio);
+                }else{
+                    imageSize *= (double) ui->comboRatio->currentText().toInt() / 100.0;
+                }
+                small = original.scaled(imageSize,Qt::KeepAspectRatio);
             }
         }
 
@@ -345,7 +356,7 @@ void Resizer::resizeAll()
 
         QTransform transform;
         if(rotateNeeded){
-            int orientation = readOrientation(img.fileinfo.absoluteFilePath());
+            int orientation = readOrientation(img->fileinfo.absoluteFilePath());
 
             switch(orientation){
             case 6: transform.rotate(90); break;

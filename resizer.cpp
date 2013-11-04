@@ -23,8 +23,8 @@ Resizer::Resizer(QWidget *parent) :
 
     QIntValidator *validator = new QIntValidator(this);
     validator->setRange(0,32768);
-    ui->posXLineEdit->setValidator(validator);
-    ui->posYLineEdit->setValidator(validator);
+    ui->horizontalLineEdit->setValidator(validator);
+    ui->verticalLineEdit->setValidator(validator);
 
 
 
@@ -36,7 +36,7 @@ Resizer::Resizer(QWidget *parent) :
     connect(ui->groupRatio,SIGNAL(clicked(bool)),this,SLOT(setRatioMode(bool)));
     connect(ui->groupSize,SIGNAL(clicked(bool)),this,SLOT(setSizeMode(bool)));
 
-    connect(ui->toolButton,SIGNAL(clicked()),this,SLOT(openLogo()));
+    connect(ui->buttonLogo,SIGNAL(clicked()),this,SLOT(openLogo()));
 
     /*QButtonGroup *buttonGroup = new QButtonGroup;
     buttonGroup->addButton(ui->radioTopLeft);
@@ -55,29 +55,69 @@ Resizer::Resizer(QWidget *parent) :
     connect(ui->buttonBox,SIGNAL(rejected()),this,SLOT(close()));
     connect(ui->buttonBox,SIGNAL(accepted()),this,SLOT(resizeAll()));
 
+    readSettings();
 
-
-    if(QFile::exists(QDesktopServices::storageLocation(QDesktopServices::PicturesLocation) + QDir::separator() + "logo.png")){
-        logoPath = QDesktopServices::storageLocation(QDesktopServices::PicturesLocation)  + QDir::separator() + "logo.png";
-        QPixmap pix(logoPath);
-        ui->labelLogo->setPixmap(pix.scaled(400,200,Qt::KeepAspectRatio));
-    }
+    setLogo(logoPath);
 
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(pressAbout()));
 }
 
 Resizer::~Resizer()
 {
+    writeSettings();
     delete ui;
+}
+
+void Resizer::writeSettings()
+{
+    QSettings settings(qAppName(), "config");
+
+    settings.setValue("options/keep_exif",ui->checkExif->isChecked());
+    settings.setValue("options/no_resize",ui->checkNotResize->isChecked());
+    settings.setValue("options/rotate",ui->checkRotate->isChecked());
+
+    settings.setValue("small/mode",ui->groupRatio->isChecked()?"ratio":"size");
+    settings.setValue("small/ratio",ui->comboRatio->currentText());
+    settings.setValue("small/pixels",ui->comboPixels->currentText());
+
+    settings.setValue("logo/attach",ui->selector->position());
+    settings.setValue("logo/shift-x",ui->horizontalLineEdit->text().toInt());
+    settings.setValue("logo/shift-y",ui->verticalLineEdit->text().toInt());
+    settings.setValue("logo/path",logoPath);
+}
+
+void Resizer::readSettings()
+{
+    QSettings settings(qAppName(), "config");
+
+    ui->checkExif->setChecked( settings.value("options/keep_exif",true).toBool() );
+    ui->checkNotResize->setChecked( settings.value("options/no_resize",false).toBool() );
+    ui->checkRotate->setChecked( settings.value("options/rotate",true).toBool() );
+
+
+    setSizeMode( settings.value("small/mode","size")=="size"?true:false );
+    ui->comboRatio->setCurrentIndex(ui->comboRatio->findText(settings.value("small/ratio",33).toString()));
+    int pixelsIndex = ui->comboPixels->findText(settings.value("small/pixels",1024).toString());
+    if(pixelsIndex>=0)
+        ui->comboPixels->setCurrentIndex(pixelsIndex);
+    else
+        ui->comboPixels->lineEdit()->setText(settings.value("small/pixels",1024).toString());
+
+    ui->selector->setPosition( static_cast<PositionSelector::POSITION>(settings.value("logo/attach",4).toInt()) );
+    ui->horizontalLineEdit->setText( settings.value("logo/shift-x",25).toString() );
+    ui->verticalLineEdit->setText( settings.value("logo/shift-y",25).toString() );
+    logoPath = settings.value("logo/path",QDesktopServices::storageLocation(QDesktopServices::PicturesLocation)  + QDir::separator() + "logo.png").toString();
 }
 
 void Resizer::setRatioMode(bool ratioMode)
 {
+    ui->groupRatio->setChecked(ratioMode);
     ui->groupSize->setChecked(!ratioMode);
 }
 
 void Resizer::setSizeMode(bool sizeMode)
 {
+    ui->groupSize->setChecked(sizeMode);
     ui->groupRatio->setChecked(!sizeMode);
 }
 
@@ -221,9 +261,20 @@ int Resizer::readOrientation(QString filepath)
 
 void Resizer::openLogo()
 {
-    logoPath = QFileDialog::getOpenFileName(this,tr("Select Logo"),"",tr("Image files (*.jpg *.jpeg *.png)"));
+    QString logo = QFileDialog::getOpenFileName(this,tr("Select Logo"),"",tr("Image files (*.jpg *.jpeg *.png)"));
 
-    if(logoPath.isEmpty()){
+    if(logo.isEmpty())
+        return;
+
+    setLogo(logo);
+}
+
+void Resizer::setLogo(QString path)
+{
+    logoPath = path;
+    ui->editLogo->setText(path);
+
+    if(logoPath.isEmpty() || !QFile::exists(logoPath)){
         ui->labelLogo->setText(tr("Logo"));
     }else{
         QPixmap pix(logoPath);
@@ -303,23 +354,35 @@ void Resizer::resizeAll()
             default: rotateNeeded = false;
             }
             small = small.transformed(transform);
-
         }
 
         if(ui->groupLogo->isChecked() && !logoPath.isEmpty() && QFile::exists(logoPath)){
             bool ok_X,ok_Y;
 
-            int posX = ui->posXLineEdit->text().toInt(&ok_X);
-            int posY = ui->posXLineEdit->text().toInt(&ok_Y);
-
-
+            int posX = ui->horizontalLineEdit->text().toInt(&ok_X);
+            int posY = ui->verticalLineEdit->text().toInt(&ok_Y);
 
             if(ok_X && ok_Y){
                 QImage logo(logoPath);
 
-                if(ui->radioBottomRight->isChecked()){
+                switch(ui->selector->position()){
+                case PositionSelector::TOP_LEFT:
+                    break;
+                case PositionSelector::TOP_RIGHT:
+                    posX = small.width() - logo.width() - posX;
+                    break;
+                case PositionSelector::BOTTOM_LEFT:
+                    posY = small.height() - logo.height() - posY;
+                    break;
+                case PositionSelector::BOTTOM_RIGHT:
                     posX = small.width() - logo.width() - posX;
                     posY = small.height() - logo.height() - posY;
+                    break;
+                case PositionSelector::CENTER:
+                    posX = small.width()/2.0 - logo.width()/2.0 + posX;
+                    posY = small.height()/2.0 - logo.height()/2.0 + posY;
+                    break;
+                default: break;
                 }
 
                 QPainter painter(&small);
@@ -330,17 +393,9 @@ void Resizer::resizeAll()
 
         small.save(output);
 
-
-
         //exif.setValue(QExifImageHeader::Orientation,0);
         //exif.setValue(QExifImageHeader::ImageWidth,small.width());
         //exif.setValue(QExifImageHeader::ImageLength,small.height());
-
-        //qDebug() << exif.saveToJpeg(output);
-
-
-        //cv::imwrite(output.toStdString(),small);
-        qDebug() << output;
 
         diag->setValue( diag->value()+1 );
     }

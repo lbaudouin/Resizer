@@ -15,7 +15,11 @@
 #include <QDesktopServices>
 #include <QProcess>
 
+#include <QSettings>
+
 #include "qexifimageheader/qexifimageheader.h"
+
+#include "positionselector.h"
 
 namespace Ui {
 class Resizer;
@@ -61,6 +65,11 @@ protected:
     void removeFile(QString);
 
     void repaintGrid();
+
+    void readSettings();
+    void writeSettings();
+
+    void setLogo(QString path);
 
 
 public slots:

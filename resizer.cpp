@@ -103,7 +103,7 @@ void Resizer::readSettings()
     else
         ui->comboPixels->lineEdit()->setText(settings.value("small/pixels",1024).toString());
 
-    ui->selector->setPosition( static_cast<PositionSelector::POSITION>(settings.value("logo/attach",4).toInt()) );
+    ui->selector->setPosition( static_cast<PositionSelector::POSITION>(settings.value("logo/attach",3).toInt()) );
     ui->horizontalLineEdit->setText( settings.value("logo/shift-x",25).toString() );
     ui->verticalLineEdit->setText( settings.value("logo/shift-y",25).toString() );
     logoPath = settings.value("logo/path",QDesktopServices::storageLocation(QDesktopServices::PicturesLocation)  + QDir::separator() + "logo.png").toString();

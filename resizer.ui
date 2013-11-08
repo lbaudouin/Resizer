@@ -39,7 +39,7 @@
              <height>443</height>
             </rect>
            </property>
-           <layout class="QGridLayout" name="gridLayout_4"/>
+           <layout class="QGridLayout" name="gridLayout"/>
           </widget>
          </widget>
         </item>

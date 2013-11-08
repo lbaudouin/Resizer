@@ -7,6 +7,10 @@ Resizer::Resizer(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    diag_ = new QProgressDialog(tr("Loading"),tr("Cancel"),0,0,this);
+    diag_->setValue(0);
+    diag_->setMinimumDuration(50);
+
     QStringList listSize;
     listSize << "320" << "480" << "640" << "720" << "800" << "1024" << "1280" << "2048" << "4096";
     ui->comboPixels->addItems( listSize );
@@ -148,11 +152,12 @@ void Resizer::pressOpenFiles()
 
 void Resizer::addList(QStringList paths)
 {
-    QProgressDialog *diag = new QProgressDialog(tr("Loading"),tr("Cancel"),0,paths.size()-1,this);
     if(paths.size()>1)
-        diag->show();
+        diag_->show();
 
     for(int i=0;i<paths.size();i++){
+
+
         QString filepath = paths[i];
 
         QFileInfo fi(filepath);
@@ -163,63 +168,36 @@ void Resizer::addList(QStringList paths)
 
             QStringList absoluteFilepaths;
             for(int i=0;i<filenames.size();i++)
-                absoluteFilepaths << dir.absolutePath() + QDir::separator() + filenames.at(i);
+                absoluteFilepaths << dir.absoluteFilePath(filenames.at(i));
             addList(absoluteFilepaths);
 
             continue;
         }
 
-        QImage small;
-
-        QImageReader reader(filepath);
-        QSize imageSize = reader.size();
-
-        if(imageSize.isValid()){
-            imageSize.scale(320,320,Qt::KeepAspectRatio);
-            reader.setScaledSize(imageSize);
-            small = reader.read();
-        }else{
-            small = QImage(filepath).scaled(320,320,Qt::KeepAspectRatio);
-        }
-
-        bool rotateNeeded = ui->checkRotate->isChecked();
-
-        QTransform transform;
-        if(rotateNeeded){
-            int orientation = readOrientation(filepath);
-
-            switch(orientation){
-            case 6: transform.rotate(90); break;
-            case 3: transform.rotate(180); break;
-            case 8: transform.rotate(270); break;
-            default: rotateNeeded = false;
-            }
-        }
-
-        QPixmap pix;
-        if(rotateNeeded){
-            QImage rotated = small.transformed(transform);
-            pix = QPixmap::fromImage(rotated);
-        }else{
-            pix = QPixmap::fromImage(small);
-        }
+        diag_->setMaximum( diag_->maximum() +1 );
 
         QLabel *label = new QLabel;
-        label->setPixmap(pix);
+        int k = mapImages.size();
+        ui->gridLayout->addWidget(label,k/5,k%5,Qt::AlignHCenter);
 
         ImageInfo *imageinfo = new ImageInfo;
-        imageinfo->preview = pix;
         imageinfo->fileinfo = fi;
-
-        int k = mapImages.size();
-
-        ui->gridLayout_4->addWidget(label,k/5,k%5,Qt::AlignHCenter);
+        imageinfo->label = label;
 
         mapImages.insert(fi.absoluteFilePath(),imageinfo);
 
-        diag->setValue( diag->value()+1 );
+
+        Loader * loader = new Loader;
+        loader->setFileInfo(fi);
+
+        connect(loader,SIGNAL(imageLoaded(QString,QImage)),this,SLOT(imageLoaded(QString,QImage)));
+
+        QThreadPool::globalInstance()->start(loader);
+
     }
-    diag->close();
+
+    if(diag_->maximum()==0)
+        diag_->close();
 }
 
 void Resizer::addFile(QString filepath)
@@ -236,6 +214,23 @@ void Resizer::removeFile(QString filepath)
     repaintGrid();
 }
 
+void Resizer::imageLoaded(QString absoluteFilePath, QImage img)
+{
+    mapImages[absoluteFilePath]->preview = QPixmap::fromImage(img);
+    mapImages[absoluteFilePath]->label->setPixmap(mapImages[absoluteFilePath]->preview);
+
+    if(diag_->value()<0)
+        diag_->setValue(1);
+    else
+        diag_->setValue( diag_->value() +1 );
+    qDebug() << diag_->value() << "/" << diag_->maximum();
+
+    if(diag_->value()<0){
+        diag_->close();
+        diag_->setMaximum(0);
+    }
+}
+
 void Resizer::repaintGrid()
 {
     int k =0;
@@ -244,7 +239,7 @@ void Resizer::repaintGrid()
         QLabel *label = new QLabel;
         label->setPixmap( img->preview );
 
-        ui->gridLayout_4->addWidget(label,k/5,k%5,Qt::AlignHCenter);
+        ui->gridLayout->addWidget(label,k/5,k%5,Qt::AlignHCenter);
 
         k++;
     }

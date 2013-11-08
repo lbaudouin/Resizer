@@ -10,7 +10,6 @@
 #include <QFileIconProvider>
 #include <QLabel>
 #include <QGridLayout>
-#include <QProgressDialog>
 #include <QPainter>
 #include <QMessageBox>
 #include <QDesktopServices>
@@ -22,6 +21,9 @@
 
 #include "positionselector.h"
 
+#include "myqprogressdialog.h"
+#include "loader.h"
+
 namespace Ui {
 class Resizer;
 }
@@ -29,6 +31,7 @@ class Resizer;
 struct ImageInfo{
     QPixmap preview;
     QFileInfo fileinfo;
+    QLabel *label;
 };
 
 class Resizer : public QMainWindow
@@ -45,6 +48,8 @@ private:
     Ui::Resizer *ui;
 
     QMap<QString,ImageInfo*> mapImages;
+
+    QProgressDialog *diag_;
 
     QString logoPath;
 
@@ -83,6 +88,8 @@ public slots:
     void pressAbout();
 
     void restart(QString path);
+
+    void imageLoaded(QString absoluteFilePath, QImage img);
 
 signals:
     void needToShow();

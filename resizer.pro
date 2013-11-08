@@ -14,12 +14,14 @@ TRANSLATIONS = resizer_fr.ts
 SOURCES += main.cpp\
     qexifimageheader/qexifimageheader.cpp \
     resizer.cpp \
-    positionselector.cpp
+    positionselector.cpp \
+    loader.cpp
 
 HEADERS  += \
     qexifimageheader/qexifimageheader.h \
     resizer.h \
-    positionselector.h
+    positionselector.h \
+    loader.h
 
 FORMS    += \
     resizer.ui

@@ -169,6 +169,8 @@ void Resizer::addList(QStringList paths)
         diag_->setMaximum( diag_->maximum() +1 );
 
         QLabel *label = new QLabel;
+        label->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(label,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(displayLabelMenu(QPoint)));
         int k = mapImages.size();
         ui->gridLayout->addWidget(label,k/5,k%5,Qt::AlignHCenter);
 
@@ -240,6 +242,20 @@ void Resizer::resizeFinished(QString absoluteFilePath)
         diag_->setMaximum(0);
         this->close();
     }
+}
+
+void Resizer::displayLabelMenu(QPoint pt)
+{
+    QMenu *menu = new QMenu(this);
+    menu->addAction(tr("Remove"),this,SLOT(removeImage()));
+
+    menu->move( qobject_cast<QWidget*>(sender())->mapToGlobal(pt) );
+    menu->show();
+}
+
+void Resizer::removeImage()
+{
+
 }
 
 void Resizer::repaintGrid()

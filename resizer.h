@@ -91,8 +91,12 @@ public slots:
 
     void restart(QString path);
 
+    void displayLabelMenu(QPoint);
+
     void imageLoaded(QString absoluteFilePath, QImage img);
     void resizeFinished(QString absoluteFilePath);
+
+    void removeImage();
 
 signals:
     void needToShow();

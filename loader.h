@@ -2,7 +2,6 @@
 #define LOADER_H
 
 #include <QRunnable>
-#include <QThreadPool>
 
 #include <QImage>
 #include <QImageReader>
@@ -16,7 +15,7 @@ class Loader : public QObject, public QRunnable
 {
     Q_OBJECT
 public:
-    explicit Loader();
+    explicit Loader(QObject *parent = 0);
     ~Loader();
     void run();
 

@@ -1,6 +1,7 @@
 #include "loader.h"
 
-Loader::Loader()
+Loader::Loader(QObject *parent) :
+               QObject(parent)
 {
     this->setAutoDelete(true);
 }

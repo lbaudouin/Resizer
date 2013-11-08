@@ -10,6 +10,7 @@
 #include <QFileIconProvider>
 #include <QLabel>
 #include <QGridLayout>
+#include <QProgressDialog>
 #include <QPainter>
 #include <QMessageBox>
 #include <QDesktopServices>
@@ -21,8 +22,9 @@
 
 #include "positionselector.h"
 
-#include "myqprogressdialog.h"
+#include <QThreadPool>
 #include "loader.h"
+#include "saver.h"
 
 namespace Ui {
 class Resizer;
@@ -90,6 +92,7 @@ public slots:
     void restart(QString path);
 
     void imageLoaded(QString absoluteFilePath, QImage img);
+    void resizeFinished(QString absoluteFilePath);
 
 signals:
     void needToShow();

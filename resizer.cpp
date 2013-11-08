@@ -42,16 +42,10 @@ Resizer::Resizer(QWidget *parent) :
 
     connect(ui->buttonLogo,SIGNAL(clicked()),this,SLOT(openLogo()));
 
-    /*QButtonGroup *buttonGroup = new QButtonGroup;
-    buttonGroup->addButton(ui->radioTopLeft);
-    buttonGroup->addButton(ui->radioBottomRight);
-    buttonGroup->setExclusive(true);*/
-
     ui->buttonOpenFiles->setText("");
     ui->buttonOpenFolder->setText("");
     ui->buttonOpenFiles->setIcon(QIcon(":images/pictures"));
     ui->buttonOpenFolder->setIcon(QIcon(":images/folder"));
-
 
     ui->actionAdd_files->setIcon(QIcon(":images/pictures"));
     ui->actionAdd_folder->setIcon(QIcon(":images/folder"));
@@ -157,9 +151,7 @@ void Resizer::addList(QStringList paths)
 
     for(int i=0;i<paths.size();i++){
 
-
         QString filepath = paths[i];
-
         QFileInfo fi(filepath);
 
         if(fi.isDir()){
@@ -217,17 +209,36 @@ void Resizer::removeFile(QString filepath)
 void Resizer::imageLoaded(QString absoluteFilePath, QImage img)
 {
     mapImages[absoluteFilePath]->preview = QPixmap::fromImage(img);
-    mapImages[absoluteFilePath]->label->setPixmap(mapImages[absoluteFilePath]->preview);
+
+    QLabel *label = mapImages[absoluteFilePath]->label;
+    label->setPixmap(mapImages[absoluteFilePath]->preview);
+    label->setStatusTip(mapImages[absoluteFilePath]->fileinfo.fileName());
+    label->setToolTip(mapImages[absoluteFilePath]->fileinfo.fileName());
 
     if(diag_->value()<0)
         diag_->setValue(1);
     else
         diag_->setValue( diag_->value() +1 );
-    qDebug() << diag_->value() << "/" << diag_->maximum();
 
     if(diag_->value()<0){
         diag_->close();
         diag_->setMaximum(0);
+    }
+}
+
+void Resizer::resizeFinished(QString absoluteFilePath)
+{
+    mapImages.remove(absoluteFilePath);
+
+    if(diag_->value()<0)
+        diag_->setValue(1);
+    else
+        diag_->setValue( diag_->value() +1 );
+
+    if(diag_->value()<0){
+        diag_->close();
+        diag_->setMaximum(0);
+        this->close();
     }
 }
 
@@ -278,136 +289,38 @@ void Resizer::setLogo(QString path)
 
 void Resizer::resizeAll()
 {
-
-    bool ok;
-    int maxSize = ui->comboPixels->currentText().toInt(&ok);
-    if(!ui->checkNotResize->isChecked() && ui->groupSize->isChecked() && !ok){
-        //TODO, display error
-        return;
-    }
-
-    int size = mapImages.size();
-
-    QProgressDialog *diag = new QProgressDialog(tr("Progress"),tr("Cancel"),0,size-1,this);
-    diag->show();
-
+    if(!mapImages.isEmpty())
+        diag_->show();
 
     foreach(ImageInfo *img, mapImages){
-        /*QExifImageHeader exif(img.fileinfo.absoluteFilePath());
+        diag_->setMaximum( diag_->maximum() +1 );
 
-        QList<QExifImageHeader::ImageTag> list1 = exif.imageTags();
-        QList<QExifImageHeader::ExifExtendedTag> list2 = exif.extendedTags();
-        QList<QExifImageHeader::GpsTag> list3 = exif.gpsTags();
+        Saver *saver = new Saver;
+        saver->setFileInfo(img->fileinfo);
+        saver->setNoResize(ui->checkNotResize->isChecked());
+        saver->setNeedRotation(ui->checkRotate->isChecked());
 
-        for(int i=0;i<list1.size();i++){
-            qDebug() << exif.value(list1[i]).toString();
-        }
-        for(int i=0;i<list2.size();i++){
-            qDebug() << exif.value(list2[i]).toString();
-        }
-        for(int i=0;i<list3.size();i++){
-            qDebug() << exif.value(list3[i]).toString();
-        }*/
+        saver->setUseRatio(ui->groupRatio->isChecked());
+        saver->setRatio( ui->comboRatio->currentText().toDouble() / 100.0 );
+        saver->setSizeMax( ui->comboPixels->currentText().toInt() );
 
-        QString output = img->fileinfo.absoluteDir().absolutePath() + QDir::separator() + "Small" + QDir::separator() + img->fileinfo.fileName();
-
-        QDir dir(img->fileinfo.absoluteDir());
-        if(!dir.exists() || !dir.mkpath("Small")){
-            //TODO display only one error
-            //QMessageBox::critical(this,"error","dir");
-            diag->close();
-            return;
-        }
-
-        QImage small;
-
-        QImageReader reader(img->fileinfo.absoluteFilePath());
-        QSize imageSize = reader.size();
-
-        if(ui->checkNotResize->isChecked()){
-            small.load(img->fileinfo.absoluteFilePath());
-        }else{
-            if(imageSize.isValid()){
-                if(ui->groupSize->isChecked()){
-                    imageSize.scale(maxSize,maxSize,Qt::KeepAspectRatio);
-                }else{
-                    imageSize *= (double) ui->comboRatio->currentText().toInt() / 100.0;
-                }
-                reader.setScaledSize(imageSize);
-                small = reader.read();
-            }else{
-                QImage original(img->fileinfo.absoluteFilePath());
-                imageSize = original.size();
-                if(ui->groupSize->isChecked()){
-                    imageSize.scale(maxSize,maxSize,Qt::KeepAspectRatio);
-                }else{
-                    imageSize *= (double) ui->comboRatio->currentText().toInt() / 100.0;
-                }
-                small = original.scaled(imageSize,Qt::KeepAspectRatio);
-            }
-        }
-
-        bool rotateNeeded = ui->checkRotate->isChecked();
-
-        QTransform transform;
-        if(rotateNeeded){
-            int orientation = readOrientation(img->fileinfo.absoluteFilePath());
-
-            switch(orientation){
-            case 6: transform.rotate(90); break;
-            case 3: transform.rotate(180); break;
-            case 8: transform.rotate(270); break;
-            default: rotateNeeded = false;
-            }
-            small = small.transformed(transform);
-        }
-
-        if(ui->groupLogo->isChecked() && !logoPath.isEmpty() && QFile::exists(logoPath)){
+        saver->setAddLogo(ui->groupLogo->isChecked());
+        if(ui->groupLogo->isChecked()){
             bool ok_X,ok_Y;
 
             int posX = ui->horizontalLineEdit->text().toInt(&ok_X);
             int posY = ui->verticalLineEdit->text().toInt(&ok_Y);
 
-            if(ok_X && ok_Y){
-                QImage logo(logoPath);
+            QImage logo(logoPath);
 
-                switch(ui->selector->position()){
-                case PositionSelector::TOP_LEFT:
-                    break;
-                case PositionSelector::TOP_RIGHT:
-                    posX = small.width() - logo.width() - posX;
-                    break;
-                case PositionSelector::BOTTOM_LEFT:
-                    posY = small.height() - logo.height() - posY;
-                    break;
-                case PositionSelector::BOTTOM_RIGHT:
-                    posX = small.width() - logo.width() - posX;
-                    posY = small.height() - logo.height() - posY;
-                    break;
-                case PositionSelector::CENTER:
-                    posX = small.width()/2.0 - logo.width()/2.0 + posX;
-                    posY = small.height()/2.0 - logo.height()/2.0 + posY;
-                    break;
-                default: break;
-                }
-
-                QPainter painter(&small);
-                painter.drawImage(posX,posY,logo);
-                painter.end();
-            }
+            saver->setLogo(logo);
+            saver->setLogoPosition(ui->selector->position(),posX,posY);
         }
 
-        small.save(output);
+        connect(saver,SIGNAL(resizeFinished(QString)),this,SLOT(resizeFinished(QString)));
 
-        //exif.setValue(QExifImageHeader::Orientation,0);
-        //exif.setValue(QExifImageHeader::ImageWidth,small.width());
-        //exif.setValue(QExifImageHeader::ImageLength,small.height());
-
-        diag->setValue( diag->value()+1 );
+        QThreadPool::globalInstance()->start(saver);
     }
-
-    diag->close();
-    this->close();
 }
 
 void Resizer::pressAbout()

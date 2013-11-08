@@ -15,13 +15,15 @@ SOURCES += main.cpp\
     qexifimageheader/qexifimageheader.cpp \
     resizer.cpp \
     positionselector.cpp \
-    loader.cpp
+    loader.cpp \
+    saver.cpp
 
 HEADERS  += \
     qexifimageheader/qexifimageheader.h \
     resizer.h \
     positionselector.h \
-    loader.h
+    loader.h \
+    saver.h
 
 FORMS    += \
     resizer.ui

@@ -26,6 +26,8 @@
 #include "loader.h"
 #include "saver.h"
 
+#include "mylabel.h"
+
 namespace Ui {
 class Resizer;
 }
@@ -33,7 +35,7 @@ class Resizer;
 struct ImageInfo{
     QPixmap preview;
     QFileInfo fileinfo;
-    QLabel *label;
+    MyLabel *label;
 };
 
 class Resizer : public QMainWindow

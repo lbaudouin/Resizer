@@ -23,7 +23,8 @@ HEADERS  += \
     resizer.h \
     positionselector.h \
     loader.h \
-    saver.h
+    saver.h \
+    mylabel.h
 
 FORMS    += \
     resizer.ui

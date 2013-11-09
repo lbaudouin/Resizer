@@ -168,7 +168,7 @@ void Resizer::addList(QStringList paths)
 
         diag_->setMaximum( diag_->maximum() +1 );
 
-        QLabel *label = new QLabel;
+        MyLabel *label = new MyLabel(fi.absoluteFilePath());
         label->setContextMenuPolicy(Qt::CustomContextMenu);
         connect(label,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(displayLabelMenu(QPoint)));
         int k = mapImages.size();
@@ -247,7 +247,8 @@ void Resizer::resizeFinished(QString absoluteFilePath)
 void Resizer::displayLabelMenu(QPoint pt)
 {
     QMenu *menu = new QMenu(this);
-    menu->addAction(tr("Remove"),this,SLOT(removeImage()));
+    QAction *action = menu->addAction(tr("Remove"),this,SLOT(removeImage()));
+    action->setData(qobject_cast<MyLabel*>(sender())->getAbsoluteFilePath());
 
     menu->move( qobject_cast<QWidget*>(sender())->mapToGlobal(pt) );
     menu->show();
@@ -255,7 +256,23 @@ void Resizer::displayLabelMenu(QPoint pt)
 
 void Resizer::removeImage()
 {
+    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
 
+    int index = ui->gridLayout->indexOf(mapImages[absoluteFilePath]->label);
+
+    int row,col,rowSpan,colSpan;
+    ui->gridLayout->getItemPosition(index,&row,&col,&rowSpan,&colSpan);
+
+    for(int k = row*5+col+1; k<ui->gridLayout->count();k++){
+        int prev = k-1;
+        ui->gridLayout->addWidget(ui->gridLayout->itemAtPosition(k/5,k%5)->widget(),prev/5,prev%5);
+    }
+
+
+    mapImages[absoluteFilePath]->label->close();
+    ui->gridLayout->removeWidget(mapImages[absoluteFilePath]->label);
+
+    mapImages.remove(absoluteFilePath);
 }
 
 void Resizer::repaintGrid()

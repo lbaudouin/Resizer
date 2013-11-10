@@ -1,3 +1,10 @@
+resizer (0.1.4) precise; urgency=low
+
+  * Use multi-threads
+  * Add options (default output, auto add logo, ...)
+
+ -- Léo Baudouin <baudouin.leo@gmail.com>  Sun, 10 Nov 2013 13:04:48 +0100
+
 resizer (0.1.3) precise; urgency=low
 
   * Remove original image from memory

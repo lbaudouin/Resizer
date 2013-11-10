@@ -11,6 +11,11 @@ void Saver::setFileInfo(QFileInfo info)
     info_ = info;
 }
 
+void Saver::setOutputSubfolder(QString subfolder)
+{
+    subfolder_ = subfolder;
+}
+
 void Saver::setNeedRotation(bool rotation)
 {
     needRotation_ = rotation;
@@ -72,10 +77,10 @@ void Saver::run()
         qDebug() << exif.value(list3[i]).toString();
     }*/
 
-    QString output = info_.absoluteDir().absolutePath() + QDir::separator() + "Small" + QDir::separator() + info_.fileName();
+    QString output = info_.absoluteDir().absolutePath() + QDir::separator() + subfolder_ + QDir::separator() + info_.fileName();
 
     QDir dir(info_.absoluteDir());
-    if(!dir.exists() || !dir.mkpath("Small")){
+    if(!dir.exists() || !dir.mkpath(subfolder_)){
         return;
     }
 

@@ -98,7 +98,8 @@ public slots:
     void imageLoaded(QString absoluteFilePath, QImage img);
     void resizeFinished(QString absoluteFilePath);
 
-    void removeImage();
+    void removeImage(QString absoluteFilePath = QString());
+    void deleteImage();
 
 signals:
     void needToShow();

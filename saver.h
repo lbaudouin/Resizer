@@ -22,6 +22,7 @@ public:
     void run();
 
     void setFileInfo(QFileInfo info);
+    void setOutputSubfolder(QString subfolder);
     void setNeedRotation(bool rotation);
     void setNoResize(bool noResize);
     void setUseRatio(bool useRatio);
@@ -35,6 +36,7 @@ public:
 
 private:
     QFileInfo info_;
+    QString subfolder_;
     bool needRotation_;
     bool noResize_;
     bool useRatio_;

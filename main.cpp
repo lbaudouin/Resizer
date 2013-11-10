@@ -1,4 +1,4 @@
-#define CURRENT_VERSION "0.1.3"
+#define CURRENT_VERSION "0.1.4"
 
 #include <QtGui/QApplication>
 #include <QTranslator>
@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
 
     QCoreApplication::setApplicationName( "resizer" );
     QtSingleApplication instance("resizer", argc, argv);
+    instance.setWindowIcon( QIcon(":/images/resizer" ) );
 
     QString message;
     if(argc)

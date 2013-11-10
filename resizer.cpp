@@ -7,7 +7,8 @@ Resizer::Resizer(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    diag_ = new QProgressDialog(tr("Loading"),tr("Cancel"),0,0,this);
+    diag_ = new QProgressDialog(QString(),tr("Cancel"),0,0,this);
+    diag_->setWindowTitle(tr("Please wait"));
     diag_->setValue(0);
     diag_->setMinimumDuration(50);
 
@@ -30,8 +31,6 @@ Resizer::Resizer(QWidget *parent) :
     ui->horizontalLineEdit->setValidator(validator);
     ui->verticalLineEdit->setValidator(validator);
 
-
-
     connect(ui->buttonOpenFolder,SIGNAL(pressed()),this,SLOT(pressOpenFolder()));
     connect(ui->buttonOpenFiles,SIGNAL(pressed()),this,SLOT(pressOpenFiles()));
     connect(ui->actionAdd_folder,SIGNAL(triggered()),this,SLOT(pressOpenFolder()));
@@ -50,8 +49,11 @@ Resizer::Resizer(QWidget *parent) :
     ui->actionAdd_files->setIcon(QIcon(":images/pictures"));
     ui->actionAdd_folder->setIcon(QIcon(":images/folder"));
 
+    ui->buttonBox->addButton(tr("Resize"),QDialogButtonBox::AcceptRole);
     connect(ui->buttonBox,SIGNAL(rejected()),this,SLOT(close()));
     connect(ui->buttonBox,SIGNAL(accepted()),this,SLOT(resizeAll()));
+
+    ui->numberOfThreadsSpinBox->setMaximum( QThread::idealThreadCount() );
 
     readSettings();
 
@@ -70,9 +72,12 @@ void Resizer::writeSettings()
 {
     QSettings settings(qAppName(), "config");
 
-    settings.setValue("options/keep_exif",ui->checkExif->isChecked());
-    settings.setValue("options/no_resize",ui->checkNotResize->isChecked());
-    settings.setValue("options/rotate",ui->checkRotate->isChecked());
+    settings.setValue("options/output_subfolder",ui->outputSubfolderLineEdit->text());
+    settings.setValue("options/keep_exif",ui->keepExifInfoCheckBox->isChecked());
+    settings.setValue("options/no_resize",ui->noResizeCheckBox->isChecked());
+    settings.setValue("options/rotate",ui->autoDetectRotationCheckBox->isChecked());
+    settings.setValue("options/auto_add_logo",ui->addLogoAutomaticalyCheckBox->isChecked());
+    settings.setValue("options/nb_thread",ui->numberOfThreadsSpinBox->value());
 
     settings.setValue("small/mode",ui->groupRatio->isChecked()?"ratio":"size");
     settings.setValue("small/ratio",ui->comboRatio->currentText());
@@ -88,9 +93,16 @@ void Resizer::readSettings()
 {
     QSettings settings(qAppName(), "config");
 
-    ui->checkExif->setChecked( settings.value("options/keep_exif",true).toBool() );
-    ui->checkNotResize->setChecked( settings.value("options/no_resize",false).toBool() );
-    ui->checkRotate->setChecked( settings.value("options/rotate",true).toBool() );
+    ui->outputSubfolderLineEdit->setText( settings.value("options/output_subfolder",tr("Small")).toString() );
+    ui->keepExifInfoCheckBox->setChecked( settings.value("options/keep_exif",false).toBool() );
+    ui->noResizeCheckBox->setChecked( settings.value("options/no_resize",false).toBool() );
+    ui->autoDetectRotationCheckBox->setChecked( settings.value("options/rotate",true).toBool() );
+    ui->addLogoAutomaticalyCheckBox->setChecked( settings.value("options/auto_add_logo",false).toBool() );
+    if(settings.value("options/auto_add_logo",false).toBool())
+        ui->groupLogo->setChecked(true);
+
+    ui->numberOfThreadsSpinBox->setValue( settings.value("options/nb_thread",QThread::idealThreadCount()).toInt() );
+    QThreadPool::globalInstance()->setMaxThreadCount( settings.value("options/nb_thread",QThread::idealThreadCount()).toInt() );
 
 
     setSizeMode( settings.value("small/mode","size")=="size"?true:false );
@@ -146,8 +158,12 @@ void Resizer::pressOpenFiles()
 
 void Resizer::addList(QStringList paths)
 {
-    if(paths.size()>1)
+    if(paths.size()>1){
+        diag_->setLabelText(tr("Loading..."));
         diag_->show();
+    }
+
+    QThreadPool::globalInstance()->setMaxThreadCount( ui->numberOfThreadsSpinBox->value() );
 
     for(int i=0;i<paths.size();i++){
 
@@ -246,17 +262,27 @@ void Resizer::resizeFinished(QString absoluteFilePath)
 
 void Resizer::displayLabelMenu(QPoint pt)
 {
+    QString absoluteFilePath = qobject_cast<MyLabel*>(sender())->getAbsoluteFilePath();
+
     QMenu *menu = new QMenu(this);
-    QAction *action = menu->addAction(tr("Remove"),this,SLOT(removeImage()));
-    action->setData(qobject_cast<MyLabel*>(sender())->getAbsoluteFilePath());
+    QAction *actionRemove = menu->addAction(tr("Remove from grid"),this,SLOT(removeImage()));
+    QAction *actionDelete = menu->addAction(tr("Delete file"),this,SLOT(deleteImage()));
+
+    actionRemove->setData(absoluteFilePath);
+    actionDelete->setData(absoluteFilePath);
 
     menu->move( qobject_cast<QWidget*>(sender())->mapToGlobal(pt) );
     menu->show();
 }
 
-void Resizer::removeImage()
+void Resizer::removeImage(QString absoluteFilePath)
 {
-    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
+    if(absoluteFilePath.isEmpty()){
+        if(qobject_cast<QAction*>(sender()))
+            absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
+        else
+            return;
+    }
 
     int index = ui->gridLayout->indexOf(mapImages[absoluteFilePath]->label);
 
@@ -273,6 +299,38 @@ void Resizer::removeImage()
     ui->gridLayout->removeWidget(mapImages[absoluteFilePath]->label);
 
     mapImages.remove(absoluteFilePath);
+}
+
+void Resizer::deleteImage()
+{
+    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
+
+    if(QFile::exists(absoluteFilePath)){
+        QMessageBox *mess = new QMessageBox(this);
+        mess->setIcon(QMessageBox::Warning);
+        mess->setWindowTitle(tr("Delete file"));
+        mess->setText(tr("This will delete the image from your computer.\nAre you sure to continue ?"));
+        QPushButton *cancelButton = mess->addButton(QMessageBox::Cancel);
+        QPushButton *trashButton = mess->addButton(tr("Move to Trash"),QMessageBox::YesRole);
+        trashButton->setDisabled(true);
+        QPushButton *deleteButton = mess->addButton(tr("Remove file"),QMessageBox::AcceptRole);
+        if( mess->exec() ){
+            if(mess->clickedButton() == cancelButton){
+                return;
+            }
+            if(mess->clickedButton() == trashButton){
+                //TODO
+            }
+
+            if(mess->clickedButton() == deleteButton){
+                QFile::remove(absoluteFilePath);
+            }
+            removeImage(absoluteFilePath);
+        }
+    }else{
+        removeImage(absoluteFilePath);
+    }
+
 }
 
 void Resizer::repaintGrid()
@@ -322,16 +380,26 @@ void Resizer::setLogo(QString path)
 
 void Resizer::resizeAll()
 {
-    if(!mapImages.isEmpty())
+    if(ui->outputSubfolderLineEdit->text().isEmpty()){
+        QMessageBox::warning(this,tr("Warning"),tr("You need to set an output subfolder name"));
+        return;
+    }
+
+    if(!mapImages.isEmpty()){
+        diag_->setLabelText(tr("Resizing..."));
         diag_->show();
+    }
+
+    QThreadPool::globalInstance()->setMaxThreadCount( ui->numberOfThreadsSpinBox->value() );
 
     foreach(ImageInfo *img, mapImages){
         diag_->setMaximum( diag_->maximum() +1 );
 
         Saver *saver = new Saver;
         saver->setFileInfo(img->fileinfo);
-        saver->setNoResize(ui->checkNotResize->isChecked());
-        saver->setNeedRotation(ui->checkRotate->isChecked());
+        saver->setNoResize(ui->noResizeCheckBox->isChecked());
+        saver->setNeedRotation(ui->autoDetectRotationCheckBox->isChecked());
+        saver->setOutputSubfolder(ui->outputSubfolderLineEdit->text());
 
         saver->setUseRatio(ui->groupRatio->isChecked());
         saver->setRatio( ui->comboRatio->currentText().toDouble() / 100.0 );

@@ -6,6 +6,7 @@
         <file alias="info">images/info.png</file>
         <file alias="folder">images/folder.png</file>
         <file alias="pictures">images/pictures.png</file>
+        <file alias="resizer">images/Resizer.png</file>
     </qresource>
     <qresource prefix="/lang">
         <file alias="lang_fr">resizer_fr.qm</file>

@@ -72,6 +72,10 @@ int main(int argc, char *argv[])
     w.setVersion(CURRENT_VERSION);
     w.show();
 
+    if(instance.arguments().contains("-f")){
+        w.pressOpenFolder();
+    }
+
     QObject::connect(&instance, SIGNAL(messageReceived(const QString&)), &w, SLOT(handleMessage(const QString&)));
 
     instance.setActivationWindow(&w, false);

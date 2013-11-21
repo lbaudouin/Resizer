@@ -14,4 +14,10 @@ MimeType=image/bmp;image/gif;image/jpeg;image/jpg;image/pjpeg;image/png;image/ti
 Categories=Graphics,Photography;
 # Extra keywords that can be used to search for resizer in GNOME Shell and Unity
 Keywords=Picture;Slideshow;Graphics;
+Actions=Folder;
 
+[Desktop Action Folder]
+Exec=resizer -f
+Name=Add folder
+Name[fr_FR]=Ajouter un dossier
+Icon=resizer

@@ -15,6 +15,8 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <QProcess>
+#include <QResizeEvent>
+#include <QScrollBar>
 
 #include <QSettings>
 
@@ -59,12 +61,15 @@ private:
 
     QString version_;
 
+    int nbColumns_;
+
 protected:
+    void resizeEvent(QResizeEvent *);
+
     void setList(QStringList paths);
 
     int readOrientation(QString filepath);
 
-    void addList(QStringList);
     void addFile(QString);
     void removeFile(QString);
 
@@ -79,6 +84,8 @@ protected:
 public slots:
     void pressOpenFolder();
     void pressOpenFiles();
+
+    void addList(QStringList);
 
     void resizeAll();
 
@@ -103,6 +110,7 @@ public slots:
 
 signals:
     void needToShow();
+    void addFiles(QStringList);
 
 };
 

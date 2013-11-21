@@ -20,7 +20,6 @@ public:
     void run();
 
     void setFileInfo(QFileInfo info);
-    void setLabel(QLabel *label);
     void setNeedRotation(bool rotation);
 
 private:

@@ -7,6 +7,8 @@ Resizer::Resizer(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    nbColumns_ = this->width() / 350;
+
     diag_ = new QProgressDialog(QString(),tr("Cancel"),0,0,this);
     diag_->setWindowTitle(tr("Please wait"));
     diag_->setValue(0);
@@ -60,12 +62,23 @@ Resizer::Resizer(QWidget *parent) :
     setLogo(logoPath);
 
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(pressAbout()));
+
+    connect(this,SIGNAL(addFiles(QStringList)),this,SLOT(addList(QStringList)),Qt::QueuedConnection);
 }
 
 Resizer::~Resizer()
 {
     writeSettings();
     delete ui;
+}
+
+void Resizer::resizeEvent(QResizeEvent *)
+{
+    int prev = nbColumns_;
+    nbColumns_ = this->width() / 350;
+    if(prev!=nbColumns_){
+        repaintGrid();
+    }
 }
 
 void Resizer::writeSettings()
@@ -141,7 +154,8 @@ void Resizer::pressOpenFolder()
     QStringList absoluteFilepaths;
     for(int i=0;i<filenames.size();i++)
         absoluteFilepaths << dir.absolutePath() + QDir::separator() + filenames.at(i);
-    addList(absoluteFilepaths);
+    QCoreApplication::processEvents();
+    emit this->addFiles(absoluteFilepaths);
 }
 
 void Resizer::pressOpenFiles()
@@ -153,7 +167,8 @@ void Resizer::pressOpenFiles()
         QFileInfo fi(paths[i]);
         absoluteFilepaths << fi.absoluteFilePath();
     }
-    addList(absoluteFilepaths);
+    QCoreApplication::processEvents();
+    emit this->addFiles(absoluteFilepaths);
 }
 
 void Resizer::addList(QStringList paths)
@@ -162,6 +177,8 @@ void Resizer::addList(QStringList paths)
         diag_->setLabelText(tr("Loading..."));
         diag_->show();
     }
+
+    ui->scrollAreaWidgetContents->hide();
 
     QThreadPool::globalInstance()->setMaxThreadCount( ui->numberOfThreadsSpinBox->value() );
 
@@ -185,10 +202,11 @@ void Resizer::addList(QStringList paths)
         diag_->setMaximum( diag_->maximum() +1 );
 
         MyLabel *label = new MyLabel(fi.absoluteFilePath());
+        label->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
         label->setContextMenuPolicy(Qt::CustomContextMenu);
         connect(label,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(displayLabelMenu(QPoint)));
         int k = mapImages.size();
-        ui->gridLayout->addWidget(label,k/5,k%5,Qt::AlignHCenter);
+        ui->gridLayout->addWidget(label,k/nbColumns_,k%nbColumns_,Qt::AlignHCenter);
 
         ImageInfo *imageinfo = new ImageInfo;
         imageinfo->fileinfo = fi;
@@ -200,7 +218,7 @@ void Resizer::addList(QStringList paths)
         Loader * loader = new Loader;
         loader->setFileInfo(fi);
 
-        connect(loader,SIGNAL(imageLoaded(QString,QImage)),this,SLOT(imageLoaded(QString,QImage)));
+        connect(loader,SIGNAL(imageLoaded(QString,QImage)),this,SLOT(imageLoaded(QString,QImage)),Qt::QueuedConnection);
 
         QThreadPool::globalInstance()->start(loader);
 
@@ -226,10 +244,10 @@ void Resizer::removeFile(QString filepath)
 
 void Resizer::imageLoaded(QString absoluteFilePath, QImage img)
 {
-    mapImages[absoluteFilePath]->preview = QPixmap::fromImage(img);
+    //mapImages[absoluteFilePath]->preview = QPixmap::fromImage(img);
 
     QLabel *label = mapImages[absoluteFilePath]->label;
-    label->setPixmap(mapImages[absoluteFilePath]->preview);
+    label->setPixmap(QPixmap::fromImage(img));
     label->setStatusTip(mapImages[absoluteFilePath]->fileinfo.fileName());
     label->setToolTip(mapImages[absoluteFilePath]->fileinfo.fileName());
 
@@ -241,6 +259,8 @@ void Resizer::imageLoaded(QString absoluteFilePath, QImage img)
     if(diag_->value()<0){
         diag_->close();
         diag_->setMaximum(0);
+        ui->scrollAreaWidgetContents->show();
+        ui->scrollAreaWidgetContents->layout()->update();
     }
 }
 
@@ -289,9 +309,9 @@ void Resizer::removeImage(QString absoluteFilePath)
     int row,col,rowSpan,colSpan;
     ui->gridLayout->getItemPosition(index,&row,&col,&rowSpan,&colSpan);
 
-    for(int k = row*5+col+1; k<ui->gridLayout->count();k++){
+    for(int k = row*nbColumns_+col+1; k<ui->gridLayout->count();k++){
         int prev = k-1;
-        ui->gridLayout->addWidget(ui->gridLayout->itemAtPosition(k/5,k%5)->widget(),prev/5,prev%5);
+        ui->gridLayout->addWidget(ui->gridLayout->itemAtPosition(k/nbColumns_,k%nbColumns_)->widget(),prev/nbColumns_,prev%nbColumns_);
     }
 
 
@@ -337,12 +357,7 @@ void Resizer::repaintGrid()
 {
     int k =0;
     foreach(ImageInfo *img, mapImages){
-
-        QLabel *label = new QLabel;
-        label->setPixmap( img->preview );
-
-        ui->gridLayout->addWidget(label,k/5,k%5,Qt::AlignHCenter);
-
+        ui->gridLayout->addWidget(img->label,k/nbColumns_,k%nbColumns_,Qt::AlignHCenter);
         k++;
     }
 }
@@ -418,7 +433,7 @@ void Resizer::resizeAll()
             saver->setLogoPosition(ui->selector->position(),posX,posY);
         }
 
-        connect(saver,SIGNAL(resizeFinished(QString)),this,SLOT(resizeFinished(QString)));
+        connect(saver,SIGNAL(resizeFinished(QString)),this,SLOT(resizeFinished(QString)),Qt::QueuedConnection);
 
         QThreadPool::globalInstance()->start(saver);
     }

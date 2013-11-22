@@ -1,2 +1,3 @@
 - unity integration
 - fix sorting on resizing
+- use QLibrary instead of plugins ?

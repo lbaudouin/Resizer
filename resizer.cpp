@@ -7,6 +7,22 @@ Resizer::Resizer(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    QStringList plugins;
+    plugins << QString("/usr/lib/resizer/libunity-plugin.so");
+
+    foreach(QString plugin, plugins){
+        if(QFile::exists(plugin)){
+            QPluginLoader * loader = new QPluginLoader( plugin , this );
+            if(loader->load()){
+                Interface *p = qobject_cast< Interface* >( loader->instance() ) ;
+                connect(this,SIGNAL(finished()),p,SLOT(finished()));
+                connect(this,SIGNAL(updateProgressBar(int,int,int)),p,SLOT(updateProgressBar(int,int,int)));
+                connect(this,SIGNAL(updateNumber(int)),p,SLOT(updateNumber(int)));
+            }
+        }
+    }
+
+
     nbColumns_ = this->width() / 350;
 
     diag_ = new QProgressDialog(QString(),tr("Cancel"),0,0,this);

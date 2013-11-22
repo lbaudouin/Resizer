@@ -30,12 +30,18 @@
 
 #include "mylabel.h"
 
+#include "plugininterface.h"
+#include <QPluginLoader>
+
+extern "C"{
+    struct UnityLauncherEntry;
+}
+
 namespace Ui {
 class Resizer;
 }
 
 struct ImageInfo{
-    QPixmap preview;
     QFileInfo fileinfo;
     MyLabel *label;
 };
@@ -111,6 +117,10 @@ public slots:
 signals:
     void needToShow();
     void addFiles(QStringList);
+
+    void finished();
+    void updateProgressBar(int min, int max, int value);
+    void updateNumber(int number);
 
 };
 

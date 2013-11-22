@@ -24,7 +24,8 @@ HEADERS  += \
     positionselector.h \
     loader.h \
     saver.h \
-    mylabel.h
+    mylabel.h \
+    plugininterface.h
 
 FORMS    += \
     resizer.ui
@@ -43,4 +44,5 @@ win32 {
 }
 
 OTHER_FILES += \
-    resizer.rc
+    resizer.rc \
+    TODO

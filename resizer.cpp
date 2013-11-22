@@ -9,15 +9,20 @@ Resizer::Resizer(QWidget *parent) :
 
     QStringList plugins;
     plugins << QString("/usr/lib/resizer/libunity-plugin.so");
+    //plugins << QString("plugins/libunity-plugin.so");
 
     foreach(QString plugin, plugins){
         if(QFile::exists(plugin)){
             QPluginLoader * loader = new QPluginLoader( plugin , this );
             if(loader->load()){
-                Interface *p = qobject_cast< Interface* >( loader->instance() ) ;
-                connect(this,SIGNAL(finished()),p,SLOT(finished()));
-                connect(this,SIGNAL(updateProgressBar(int,int,int)),p,SLOT(updateProgressBar(int,int,int)));
-                connect(this,SIGNAL(updateNumber(int)),p,SLOT(updateNumber(int)));
+                Interface *interface = qobject_cast< Interface* >( loader->instance() ) ;
+                if(interface){
+                    connect(this,SIGNAL(finished()),interface,SLOT(finished()));
+                    connect(this,SIGNAL(updateProgressBar(int,int,int)),interface,SLOT(updateProgressBar(int,int,int)));
+                    connect(this,SIGNAL(updateNumber(int)),interface,SLOT(updateNumber(int)));
+
+                    qDebug() << "Plugin connected:" << plugin;
+                }
             }
         }
     }
@@ -267,10 +272,14 @@ void Resizer::imageLoaded(QString absoluteFilePath, QImage img)
     label->setStatusTip(mapImages[absoluteFilePath]->fileinfo.fileName());
     label->setToolTip(mapImages[absoluteFilePath]->fileinfo.fileName());
 
+    emit this->updateNumber( mapImages.count() );
+
     if(diag_->value()<0)
         diag_->setValue(1);
     else
         diag_->setValue( diag_->value() +1 );
+
+    emit this->updateProgressBar(diag_->minimum(),diag_->maximum(),diag_->value());
 
     if(diag_->value()<0){
         diag_->close();
@@ -289,9 +298,13 @@ void Resizer::resizeFinished(QString absoluteFilePath)
     else
         diag_->setValue( diag_->value() +1 );
 
+    emit this->updateProgressBar(diag_->minimum(),diag_->maximum(),diag_->value());
+
     if(diag_->value()<0){
         diag_->close();
         diag_->setMaximum(0);
+        this->hide();
+        emit this->finished();
         this->close();
     }
 }

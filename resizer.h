@@ -32,10 +32,8 @@
 
 #include "plugininterface.h"
 #include <QPluginLoader>
+#include <QTimer>
 
-extern "C"{
-    struct UnityLauncherEntry;
-}
 
 namespace Ui {
 class Resizer;

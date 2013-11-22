@@ -1,0 +1,27 @@
+#!/usr/bin/make -f
+
+BUILDDIR = build_dir
+
+# secondly called by launchpad
+build:
+	qmake
+	make
+
+# thirdly called by launchpad
+binary: binary-indep binary-arch
+
+binary-indep:
+# nothing to be done
+
+binary-arch:
+	mkdir -p debian/tmp/DEBIAN
+	mkdir -p debian/tmp/usr/lib/resizer/
+	cp libunity-plugin.so debian/tmp/usr/lib/resizer/
+	dpkg-gencontrol -presizer-plugin-unity
+	dpkg --build debian/tmp ..
+
+# firstly called by launchpad
+clean:
+	rm -f build
+
+.PHONY: binary binary-arch binary-indep clean

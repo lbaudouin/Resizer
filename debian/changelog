@@ -1,3 +1,9 @@
+resizer (0.1.5) precise; urgency=low
+
+  * Use plugins for interface integration
+
+ -- Léo Baudouin <baudouin.leo@gmail.com>  Fri, 22 Nov 2013 21:46:18 +0100
+
 resizer (0.1.4) precise; urgency=low
 
   * Use multi-threads

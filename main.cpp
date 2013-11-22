@@ -1,4 +1,4 @@
-#define CURRENT_VERSION "0.1.4"
+#define CURRENT_VERSION "0.1.5"
 
 #include <QtGui/QApplication>
 #include <QTranslator>
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     w.setVersion(CURRENT_VERSION);
     w.show();
 
-    if(instance.arguments().contains("-f")){
+    if(instance.arguments().contains("--open-folder")){
         w.pressOpenFolder();
     }
 

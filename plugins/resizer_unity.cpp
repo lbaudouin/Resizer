@@ -37,6 +37,17 @@ void ResizerUnity::updateNumber(int number)
 void ResizerUnity::finished()
 {
     unity_launcher_entry_set_urgent (unity, true);
+
+    QEventLoop *loop = new QEventLoop;
+
+    QTimer *timer = new QTimer;
+    timer->setSingleShot(true);
+
+    connect(timer,SIGNAL(timeout()),loop,SLOT(quit()));
+
+    timer->start(500);
+
+    loop->exec();
 }
 
-Q_EXPORT_PLUGIN2(ResizerUnity, ResizerUnity)
+Q_EXPORT_PLUGIN2(unity-plugin, ResizerUnity)

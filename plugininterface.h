@@ -3,6 +3,11 @@
 
 #include <QtPlugin>
 
+QT_BEGIN_NAMESPACE
+class QString;
+class QObject;
+QT_END_NAMESPACE
+
 class Interface : public QObject
 {
     Q_OBJECT

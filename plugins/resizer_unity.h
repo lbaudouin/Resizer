@@ -7,6 +7,9 @@
 
 #include "plugininterface.h"
 
+#include <QEventLoop>
+#include <QTimer>
+
 class ResizerUnity : public Interface
 {
     Q_OBJECT

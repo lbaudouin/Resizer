@@ -1,4 +1,4 @@
-#define CURRENT_VERSION "0.1.5"
+#define CURRENT_VERSION "0.1.6"
 
 #include <QtGui/QApplication>
 #include <QTranslator>
@@ -74,6 +74,9 @@ int main(int argc, char *argv[])
 
     if(instance.arguments().contains("--open-folder")){
         w.pressOpenFolder();
+    }
+    if(instance.arguments().contains("--open-file")){
+        w.pressOpenFiles();
     }
 
     QObject::connect(&instance, SIGNAL(messageReceived(const QString&)), &w, SLOT(handleMessage(const QString&)));

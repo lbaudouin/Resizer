@@ -9,4 +9,5 @@ Homepage: http://lbaudouin.chez.com/
 Package: resizer
 Architecture: any
 Depends: libqtcore4,libqtgui4
+Suggests: resizer-plugin-unity
 Description: Resize images

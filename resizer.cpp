@@ -27,6 +27,7 @@ Resizer::Resizer(QWidget *parent) :
         }
     }
 
+    this->setAcceptDrops( true );
 
     nbColumns_ = this->width() / 350;
 
@@ -64,8 +65,6 @@ Resizer::Resizer(QWidget *parent) :
 
     connect(ui->buttonLogo,SIGNAL(clicked()),this,SLOT(openLogo()));
 
-    ui->buttonOpenFiles->setText("");
-    ui->buttonOpenFolder->setText("");
     ui->buttonOpenFiles->setIcon(QIcon(":images/pictures"));
     ui->buttonOpenFolder->setIcon(QIcon(":images/folder"));
 
@@ -220,6 +219,9 @@ void Resizer::addList(QStringList paths)
             continue;
         }
 
+        if(mapImages.contains(fi.absoluteFilePath()))
+            continue;
+
         diag_->setMaximum( diag_->maximum() +1 );
 
         MyLabel *label = new MyLabel(fi.absoluteFilePath());
@@ -245,8 +247,10 @@ void Resizer::addList(QStringList paths)
 
     }
 
-    if(diag_->maximum()==0)
+    if(diag_->maximum()==0){
         diag_->close();
+        ui->scrollAreaWidgetContents->show();
+    }
 }
 
 void Resizer::addFile(QString filepath)
@@ -467,6 +471,35 @@ void Resizer::resizeAll()
         QThreadPool::globalInstance()->start(saver);
     }
 }
+
+void Resizer::dropEvent(QDropEvent *event)
+{
+    QList<QUrl> filelist = event->mimeData()->urls() ;
+
+    QStringList files;
+
+    foreach(QUrl url, filelist){
+        files << url.toLocalFile();
+    }
+
+    addList(files);
+}
+
+void Resizer::dragEnterEvent(QDragEnterEvent *event)
+{
+    event->acceptProposedAction();
+}
+
+void Resizer::dragMoveEvent(QDragMoveEvent* event)
+{
+    event->acceptProposedAction();
+}
+
+void Resizer::dragLeaveEvent(QDragLeaveEvent* event)
+{
+    event->accept();
+}
+
 
 void Resizer::pressAbout()
 {

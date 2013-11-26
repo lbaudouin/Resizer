@@ -1,4 +1,4 @@
-- unity integration
+*** unity integration
 - fix sorting on resizing
 - use QLibrary instead of plugins ?
 - redefine progress max if unvalid image

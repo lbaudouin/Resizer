@@ -1,3 +1,9 @@
+resizer (0.1.6) precise; urgency=low
+
+  * Add drag and drop action
+
+ -- Léo Baudouin <baudouin.leo@gmail.com>  Tue, 26 Nov 2013 15:45:52 +0100
+
 resizer (0.1.5) precise; urgency=low
 
   * Use plugins for interface integration

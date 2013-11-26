@@ -16,7 +16,9 @@
 #include <QDesktopServices>
 #include <QProcess>
 #include <QResizeEvent>
+#include <QDropEvent>
 #include <QScrollBar>
+#include <QUrl>
 
 #include <QSettings>
 
@@ -68,6 +70,11 @@ private:
     int nbColumns_;
 
 protected:
+    void dropEvent(QDropEvent *event);
+    void dragEnterEvent( QDragEnterEvent *event );
+    void dragMoveEvent( QDragMoveEvent *event );
+    void dragLeaveEvent( QDragLeaveEvent *event );
+
     void resizeEvent(QResizeEvent *);
 
     void setList(QStringList paths);

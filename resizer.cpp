@@ -7,6 +7,9 @@ Resizer::Resizer(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    QCoreApplication::setAttribute(Qt::AA_DontShowIconsInMenus,false);
+    qRegisterMetaType<ImageData>("ImageData");
+
     QStringList plugins;
     plugins << QString("/usr/lib/resizer/libunity-plugin.so");
     //plugins << QString("plugins/libunity-plugin.so");
@@ -168,19 +171,22 @@ void Resizer::pressOpenFolder()
 {
     QString path = QFileDialog::getExistingDirectory(this,tr("Select a Folder"),QDir::homePath());
     if(path.isEmpty()) return;
-    QDir dir(path);
-    QStringList filenames = dir.entryList(QStringList() << "*.jpg" << "*.JPG"<< "*.jpeg" << "*.JPEG" << "*.png" << "*.PNG");
 
-    QStringList absoluteFilepaths;
-    for(int i=0;i<filenames.size();i++)
-        absoluteFilepaths << dir.absolutePath() + QDir::separator() + filenames.at(i);
     QCoreApplication::processEvents();
-    emit this->addFiles(absoluteFilepaths);
+    emit this->addFiles(QStringList() << path);
 }
 
 void Resizer::pressOpenFiles()
 {
-    QStringList paths = QFileDialog::getOpenFileNames(this,tr("Select Files"),QDir::homePath(), tr("Image files (*.jpg *.jpeg *.png)"));
+    QList<QByteArray> supported = QImageWriter::supportedImageFormats();
+
+    QStringList filters;
+    foreach(QByteArray filter, supported){
+        filters << "*." + QString(filter);
+    }
+    qDebug() << filters.join(" ");
+
+    QStringList paths = QFileDialog::getOpenFileNames(this, tr("Select Files"), QDir::homePath(), tr("Image files (%1)").arg(filters.join(" ")));
     if(paths.isEmpty()) return;
     QStringList absoluteFilepaths;
     for(int i=0;i<paths.size();i++){
@@ -209,18 +215,27 @@ void Resizer::addList(QStringList paths)
 
         if(fi.isDir()){
             QDir dir(filepath);
-            QStringList filenames = dir.entryList(QStringList() << "*.jpg" << "*.JPG"<< "*.jpeg" << "*.JPEG" << "*.png" << "*.PNG");
+            if(!dir.exists())
+                continue;
+
+            dir.setFilter(QDir::Files);
+            QStringList filenames = dir.entryList();
 
             QStringList absoluteFilepaths;
             for(int i=0;i<filenames.size();i++)
                 absoluteFilepaths << dir.absoluteFilePath(filenames.at(i));
             addList(absoluteFilepaths);
-
             continue;
         }
 
         if(mapImages.contains(fi.absoluteFilePath()))
             continue;
+
+
+        QImageReader reader(fi.absoluteFilePath());
+        if(!QImageWriter::supportedImageFormats().contains(reader.format())){
+            continue;
+        }
 
         diag_->setMaximum( diag_->maximum() +1 );
 
@@ -240,8 +255,9 @@ void Resizer::addList(QStringList paths)
 
         Loader * loader = new Loader;
         loader->setFileInfo(fi);
+        loader->setNeedRotation(ui->autoDetectRotationCheckBox->isChecked());
 
-        connect(loader,SIGNAL(imageLoaded(QString,QImage)),this,SLOT(imageLoaded(QString,QImage)),Qt::QueuedConnection);
+        connect(loader,SIGNAL(imageLoaded(QString,ImageData)),this,SLOT(imageLoaded(QString,ImageData)),Qt::QueuedConnection);
 
         QThreadPool::globalInstance()->start(loader);
 
@@ -267,9 +283,27 @@ void Resizer::removeFile(QString filepath)
     repaintGrid();
 }
 
-void Resizer::imageLoaded(QString absoluteFilePath, QImage img)
+void Resizer::imageLoaded(QString absoluteFilePath, ImageData imgData)
 {
-    //mapImages[absoluteFilePath]->preview = QPixmap::fromImage(img);
+    if(imgData.image.isNull()){
+        qDebug() << "Failed to load:" << absoluteFilePath;
+    }
+
+    QImage img;
+    if(imgData.rotation==NO_ROTATION){
+        img = imgData.image;
+    }else{
+        QTransform transform;
+        switch(imgData.rotation){
+        case CLOCKWISE: transform.rotate(90); break;
+        case REVERSE: transform.rotate(180); break;
+        case COUNTERCLOCKWISE: transform.rotate(270); break;
+        default: break;
+        }
+        img = imgData.image.transformed(transform);
+    }
+
+    mapImages[absoluteFilePath]->rotation = imgData.rotation;
 
     QLabel *label = mapImages[absoluteFilePath]->label;
     label->setPixmap(QPixmap::fromImage(img));
@@ -318,9 +352,19 @@ void Resizer::displayLabelMenu(QPoint pt)
     QString absoluteFilePath = qobject_cast<MyLabel*>(sender())->getAbsoluteFilePath();
 
     QMenu *menu = new QMenu(this);
-    QAction *actionRemove = menu->addAction(tr("Remove from grid"),this,SLOT(removeImage()));
-    QAction *actionDelete = menu->addAction(tr("Delete file"),this,SLOT(deleteImage()));
+    QAction *actionAuto = menu->addAction(QIcon(":images/auto"),tr("Detect rotation"),this,SLOT(detectRotation()));
+    QAction *actionReset = menu->addAction(QIcon(":images/cancel"),tr("Reset rotation"),this,SLOT(resetRotation()));
+    QAction *actionLeft = menu->addAction(QIcon(":images/left"),tr("Rotate to left"),this,SLOT(rotateLeft()));
+    QAction *actionRigth = menu->addAction(QIcon(":images/right"),tr("Rotate to right"),this,SLOT(rotateRight()));
+    menu->addSeparator();
+    QAction *actionRemove = menu->addAction(QIcon(":images/remove"),tr("Remove from grid"),this,SLOT(removeImage()));
+    QAction *actionDelete = menu->addAction(QIcon(":images/delete"),tr("Delete file"),this,SLOT(deleteImage()));
 
+
+    actionAuto->setData(absoluteFilePath);
+    actionReset->setData(absoluteFilePath);
+    actionLeft->setData(absoluteFilePath);
+    actionRigth->setData(absoluteFilePath);
     actionRemove->setData(absoluteFilePath);
     actionDelete->setData(absoluteFilePath);
 
@@ -386,6 +430,108 @@ void Resizer::deleteImage()
 
 }
 
+void Resizer::detectRotation()
+{
+    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
+
+    int orientation = QExifImageHeader(absoluteFilePath).value(QExifImageHeader::Orientation).toShort();
+
+    RotationState rotation;
+    switch(orientation){
+    case 6: rotation = CLOCKWISE; break;
+    case 3: rotation = REVERSE; break;
+    case 8: rotation = COUNTERCLOCKWISE; break;
+    default: rotation = NO_ROTATION;
+    }
+
+    qDebug() << mapImages[absoluteFilePath]->rotation << rotation;
+
+    if(rotation==mapImages[absoluteFilePath]->rotation)
+        return;
+
+    QTransform transform;
+    switch(mapImages[absoluteFilePath]->rotation){
+    case CLOCKWISE: transform.rotate(-90); break;
+    case REVERSE: transform.rotate(-180); break;
+    case COUNTERCLOCKWISE: transform.rotate(-270); break;
+    default: break;
+    }
+    switch(rotation){
+    case CLOCKWISE: transform.rotate(90); break;
+    case REVERSE: transform.rotate(180); break;
+    case COUNTERCLOCKWISE: transform.rotate(270); break;
+    default: break;
+    }
+
+    QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
+    pix = pix.transformed(transform);
+    mapImages[absoluteFilePath]->rotation = rotation;
+
+    mapImages[absoluteFilePath]->label->setPixmap(pix);
+}
+
+void Resizer::resetRotation()
+{
+    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
+
+    if(mapImages[absoluteFilePath]->rotation==NO_ROTATION)
+        return;
+
+
+    QTransform transform;
+    switch(mapImages[absoluteFilePath]->rotation){
+    case CLOCKWISE: transform.rotate(-90); break;
+    case REVERSE: transform.rotate(-180); break;
+    case COUNTERCLOCKWISE: transform.rotate(-270); break;
+    default: break;
+    }
+
+    QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
+    pix = pix.transformed(transform);
+
+    mapImages[absoluteFilePath]->label->setPixmap(pix);
+    mapImages[absoluteFilePath]->rotation = NO_ROTATION;
+}
+
+void Resizer::rotateLeft()
+{
+    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
+
+    QTransform transform;
+    transform.rotate(-90);
+
+    QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
+    pix = pix.transformed(transform);
+
+    mapImages[absoluteFilePath]->label->setPixmap(pix);
+
+    RotationState rotation;
+    if(mapImages[absoluteFilePath]->rotation==NO_ROTATION){
+        rotation = COUNTERCLOCKWISE;
+    }else{
+        rotation = static_cast<RotationState>(mapImages[absoluteFilePath]->rotation-1);
+    }
+
+    mapImages[absoluteFilePath]->rotation = rotation;
+}
+
+void Resizer::rotateRight()
+{
+    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
+
+    QTransform transform;
+    transform.rotate(90);
+
+    QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
+    pix = pix.transformed(transform);
+
+    mapImages[absoluteFilePath]->label->setPixmap(pix);
+
+    RotationState rotation = static_cast<RotationState>((mapImages[absoluteFilePath]->rotation+1)%4);
+
+    mapImages[absoluteFilePath]->rotation = rotation;
+}
+
 void Resizer::repaintGrid()
 {
     int k =0;
@@ -393,14 +539,6 @@ void Resizer::repaintGrid()
         ui->gridLayout->addWidget(img->label,k/nbColumns_,k%nbColumns_,Qt::AlignHCenter);
         k++;
     }
-}
-
-int Resizer::readOrientation(QString filepath)
-{
-    if(QFile::exists(filepath)){
-        return QExifImageHeader(filepath).value(QExifImageHeader::Orientation).toShort();
-    }
-    return 0;
 }
 
 void Resizer::openLogo()
@@ -446,7 +584,7 @@ void Resizer::resizeAll()
         Saver *saver = new Saver;
         saver->setFileInfo(img->fileinfo);
         saver->setNoResize(ui->noResizeCheckBox->isChecked());
-        saver->setNeedRotation(ui->autoDetectRotationCheckBox->isChecked());
+        saver->setRotation(img->rotation);
         saver->setOutputSubfolder(ui->outputSubfolderLineEdit->text());
 
         saver->setUseRatio(ui->groupRatio->isChecked());

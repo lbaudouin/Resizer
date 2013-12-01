@@ -14,6 +14,10 @@
 #include "qexifimageheader/qexifimageheader.h"
 #include "positionselector.h"
 
+#include <QDebug>
+
+#include "rotationstate.h"
+
 class Saver : public QObject, public QRunnable
 {
     Q_OBJECT
@@ -23,7 +27,7 @@ public:
 
     void setFileInfo(QFileInfo info);
     void setOutputSubfolder(QString subfolder);
-    void setNeedRotation(bool rotation);
+    void setRotation(RotationState rotation);
     void setNoResize(bool noResize);
     void setUseRatio(bool useRatio);
     void setAddLogo(bool addLogo);
@@ -37,7 +41,7 @@ public:
 private:
     QFileInfo info_;
     QString subfolder_;
-    bool needRotation_;
+    RotationState rotation_;
     bool noResize_;
     bool useRatio_;
     bool addLogo_;

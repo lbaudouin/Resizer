@@ -16,9 +16,9 @@ void Saver::setOutputSubfolder(QString subfolder)
     subfolder_ = subfolder;
 }
 
-void Saver::setNeedRotation(bool rotation)
+void Saver::setRotation(RotationState rotation)
 {
-    needRotation_ = rotation;
+    rotation_ = rotation;
 }
 
 void Saver::setNoResize(bool noResize)
@@ -85,7 +85,6 @@ void Saver::run()
     }
 
     QImage small;
-
     QImageReader reader(info_.absoluteFilePath());
     QSize imageSize = reader.size();
 
@@ -112,18 +111,15 @@ void Saver::run()
         }
     }
 
-    QTransform transform;
-    if(needRotation_){
-        int orientation = QExifImageHeader(info_.absoluteFilePath()).value(QExifImageHeader::Orientation).toShort();
-
-        switch(orientation){
-        case 6: transform.rotate(90); break;
-        case 3: transform.rotate(180); break;
-        case 8: transform.rotate(270); break;
-        default: needRotation_ = false;
+    if(rotation_!=NO_ROTATION){
+        QTransform transform;
+        switch(rotation_){
+        case CLOCKWISE: transform.rotate(90); break;
+        case REVERSE: transform.rotate(180); break;
+        case COUNTERCLOCKWISE: transform.rotate(270); break;
+        default: transform.reset();
         }
-        if(needRotation_)
-            small = small.transformed(transform);
+        small = small.transformed(transform);
     }
 
     if(addLogo_ && !logo_.isNull()){
@@ -151,8 +147,6 @@ void Saver::run()
         painter.drawImage(xShift_,yShift_,logo_);
         painter.end();
     }
-
-    small.save(output);
 
     //exif.setValue(QExifImageHeader::Orientation,0);
     //exif.setValue(QExifImageHeader::ImageWidth,small.width());

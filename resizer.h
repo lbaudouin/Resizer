@@ -44,6 +44,7 @@ class Resizer;
 struct ImageInfo{
     QFileInfo fileinfo;
     MyLabel *label;
+    RotationState rotation;
 };
 
 class Resizer : public QMainWindow
@@ -77,10 +78,6 @@ protected:
 
     void resizeEvent(QResizeEvent *);
 
-    void setList(QStringList paths);
-
-    int readOrientation(QString filepath);
-
     void addFile(QString);
     void removeFile(QString);
 
@@ -113,11 +110,15 @@ public slots:
 
     void displayLabelMenu(QPoint);
 
-    void imageLoaded(QString absoluteFilePath, QImage img);
+    void imageLoaded(QString absoluteFilePath, ImageData imageData);
     void resizeFinished(QString absoluteFilePath);
 
     void removeImage(QString absoluteFilePath = QString());
     void deleteImage();
+    void detectRotation();
+    void resetRotation();
+    void rotateLeft();
+    void rotateRight();
 
 signals:
     void needToShow();

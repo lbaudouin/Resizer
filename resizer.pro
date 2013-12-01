@@ -25,7 +25,8 @@ HEADERS  += \
     loader.h \
     saver.h \
     mylabel.h \
-    plugininterface.h
+    plugininterface.h \
+    rotationstate.h
 
 FORMS    += \
     resizer.ui

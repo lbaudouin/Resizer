@@ -9,7 +9,16 @@
 #include <QLabel>
 #include <QFileInfo>
 
+#include <QDebug>
+
 #include "qexifimageheader/qexifimageheader.h"
+
+#include "rotationstate.h"
+
+struct ImageData{
+    QImage image;
+    RotationState rotation;
+};
 
 class Loader : public QObject, public QRunnable
 {
@@ -20,7 +29,7 @@ public:
     void run();
 
     void setFileInfo(QFileInfo info);
-    void setNeedRotation(bool rotation);
+    void setNeedRotation(bool needRotation = true);
 
 private:
     QFileInfo info_;
@@ -28,6 +37,7 @@ private:
 
 signals:
     void imageLoaded(QString absoluteFilePath, QImage img);
+    void imageLoaded(QString absoluteFilePath, ImageData imgData);
     
 };
 

@@ -7,6 +7,12 @@
         <file alias="folder">images/folder.png</file>
         <file alias="pictures">images/pictures.png</file>
         <file alias="resizer">images/Resizer.png</file>
+        <file alias="delete">images/delete.png</file>
+        <file alias="left">images/left.png</file>
+        <file alias="remove">images/remove.png</file>
+        <file alias="right">images/right.png</file>
+        <file alias="auto">images/auto.png</file>
+        <file alias="cancel">images/cancel.png</file>
     </qresource>
     <qresource prefix="/lang">
         <file alias="lang_fr">resizer_fr.qm</file>

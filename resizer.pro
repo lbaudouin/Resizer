@@ -16,7 +16,8 @@ SOURCES += main.cpp\
     resizer.cpp \
     positionselector.cpp \
     loader.cpp \
-    saver.cpp
+    saver.cpp \
+    mylabel.cpp
 
 HEADERS  += \
     qexifimageheader/qexifimageheader.h \

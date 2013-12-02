@@ -243,6 +243,12 @@ void Resizer::addList(QStringList paths)
         label->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
         label->setContextMenuPolicy(Qt::CustomContextMenu);
         connect(label,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(displayLabelMenu(QPoint)));
+        connect(label,SIGNAL(autoPressed(QString)),this,SLOT(detectRotation(QString)));
+        connect(label,SIGNAL(resetPressed(QString)),this,SLOT(resetRotation(QString)));
+        connect(label,SIGNAL(leftPressed(QString)),this,SLOT(rotateLeft(QString)));
+        connect(label,SIGNAL(rightPressed(QString)),this,SLOT(rotateRight(QString)));
+        connect(label,SIGNAL(removePressed(QString)),this,SLOT(removeImage(QString)));
+        connect(label,SIGNAL(deletePressed(QString)),this,SLOT(deleteImage(QString)));
         int k = mapImages.size();
         ui->gridLayout->addWidget(label,k/nbColumns_,k%nbColumns_,Qt::AlignHCenter);
 
@@ -349,7 +355,17 @@ void Resizer::resizeFinished(QString absoluteFilePath)
 
 void Resizer::displayLabelMenu(QPoint pt)
 {
-    QString absoluteFilePath = qobject_cast<MyLabel*>(sender())->getAbsoluteFilePath();
+    //QString absoluteFilePath = qobject_cast<MyLabel*>(sender())->getAbsoluteFilePath();
+
+    QStringList absoluteFilePathList;
+    foreach(ImageInfo* info, mapImages){
+        if(info->label->isChecked()){
+            absoluteFilePathList << info->fileinfo.absoluteFilePath();
+            info->label->setUnChecked();
+        }
+    }
+
+
 
     QMenu *menu = new QMenu(this);
     QAction *actionAuto = menu->addAction(QIcon(":images/auto"),tr("Detect rotation"),this,SLOT(detectRotation()));
@@ -361,183 +377,266 @@ void Resizer::displayLabelMenu(QPoint pt)
     QAction *actionDelete = menu->addAction(QIcon(":images/delete"),tr("Delete file"),this,SLOT(deleteImage()));
 
 
-    actionAuto->setData(absoluteFilePath);
-    actionReset->setData(absoluteFilePath);
-    actionLeft->setData(absoluteFilePath);
-    actionRigth->setData(absoluteFilePath);
-    actionRemove->setData(absoluteFilePath);
-    actionDelete->setData(absoluteFilePath);
+    actionAuto->setData(absoluteFilePathList);
+    actionReset->setData(absoluteFilePathList);
+    actionLeft->setData(absoluteFilePathList);
+    actionRigth->setData(absoluteFilePathList);
+    actionRemove->setData(absoluteFilePathList);
+    actionDelete->setData(absoluteFilePathList);
 
     menu->move( qobject_cast<QWidget*>(sender())->mapToGlobal(pt) );
     menu->show();
 }
 
+void Resizer::removeImage()
+{
+    QAction *action = qobject_cast<QAction*>(sender());
+    if(action){
+        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
+        removeImage(absoluteFilePathList);
+    }
+}
+
 void Resizer::removeImage(QString absoluteFilePath)
 {
-    if(absoluteFilePath.isEmpty()){
-        if(qobject_cast<QAction*>(sender()))
-            absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
-        else
-            return;
+    removeImage(QStringList() << absoluteFilePath);
+}
+
+void Resizer::removeImage(QStringList absoluteFilePathList)
+{
+    foreach(QString absoluteFilePath, absoluteFilePathList){
+        int index = ui->gridLayout->indexOf(mapImages[absoluteFilePath]->label);
+
+        int row,col,rowSpan,colSpan;
+        ui->gridLayout->getItemPosition(index,&row,&col,&rowSpan,&colSpan);
+
+        for(int k = row*nbColumns_+col+1; k<ui->gridLayout->count();k++){
+            int prev = k-1;
+            ui->gridLayout->addWidget(ui->gridLayout->itemAtPosition(k/nbColumns_,k%nbColumns_)->widget(),prev/nbColumns_,prev%nbColumns_);
+        }
+
+
+        mapImages[absoluteFilePath]->label->close();
+        ui->gridLayout->removeWidget(mapImages[absoluteFilePath]->label);
+
+        mapImages.remove(absoluteFilePath);
     }
-
-    int index = ui->gridLayout->indexOf(mapImages[absoluteFilePath]->label);
-
-    int row,col,rowSpan,colSpan;
-    ui->gridLayout->getItemPosition(index,&row,&col,&rowSpan,&colSpan);
-
-    for(int k = row*nbColumns_+col+1; k<ui->gridLayout->count();k++){
-        int prev = k-1;
-        ui->gridLayout->addWidget(ui->gridLayout->itemAtPosition(k/nbColumns_,k%nbColumns_)->widget(),prev/nbColumns_,prev%nbColumns_);
-    }
-
-
-    mapImages[absoluteFilePath]->label->close();
-    ui->gridLayout->removeWidget(mapImages[absoluteFilePath]->label);
-
-    mapImages.remove(absoluteFilePath);
 }
 
 void Resizer::deleteImage()
 {
-    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
+    QAction *action = qobject_cast<QAction*>(sender());
+    if(action){
+        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
+        deleteImage(absoluteFilePathList);
+    }
+}
 
-    if(QFile::exists(absoluteFilePath)){
-        QMessageBox *mess = new QMessageBox(this);
-        mess->setIcon(QMessageBox::Warning);
-        mess->setWindowTitle(tr("Delete file"));
-        mess->setText(tr("This will delete the image from your computer.\nAre you sure to continue ?"));
-        QPushButton *cancelButton = mess->addButton(QMessageBox::Cancel);
-        QPushButton *trashButton = mess->addButton(tr("Move to Trash"),QMessageBox::YesRole);
-        trashButton->setDisabled(true);
-        QPushButton *deleteButton = mess->addButton(tr("Remove file"),QMessageBox::AcceptRole);
-        if( mess->exec() ){
-            if(mess->clickedButton() == cancelButton){
-                return;
-            }
+void Resizer::deleteImage(QString absoluteFilePath)
+{
+    deleteImage(QStringList() << absoluteFilePath);
+}
+
+void Resizer::deleteImage(QStringList absoluteFilePathList)
+{
+    if(absoluteFilePathList.isEmpty())
+        return;
+
+    QMessageBox *mess = new QMessageBox(this);
+    mess->setIcon(QMessageBox::Warning);
+    mess->setWindowTitle(tr("Delete file"));
+    if(absoluteFilePathList.size()>1){
+        mess->setText(tr("This will delete the image files from your computer.\nAre you sure to continue ?"));
+        mess->setDetailedText(absoluteFilePathList.join("\n"));
+    }else{
+        mess->setText(tr("This will delete the image file '%1' from your computer.\nAre you sure to continue ?").arg(QFileInfo(absoluteFilePathList.first()).fileName()));
+    }
+    QPushButton *cancelButton = mess->addButton(QMessageBox::Cancel);
+    QPushButton *trashButton = mess->addButton(tr("Move to Trash"),QMessageBox::YesRole);
+    trashButton->setDisabled(true);
+    QPushButton *deleteButton = mess->addButton(tr("Remove file"),QMessageBox::AcceptRole);
+
+    if( mess->exec() ){
+        if(mess->clickedButton() == cancelButton){
+            return;
+        }
+
+        foreach(QString absoluteFilePath, absoluteFilePathList){
             if(mess->clickedButton() == trashButton){
                 //TODO
             }
-
             if(mess->clickedButton() == deleteButton){
                 QFile::remove(absoluteFilePath);
             }
             removeImage(absoluteFilePath);
         }
-    }else{
-        removeImage(absoluteFilePath);
     }
-
 }
 
 void Resizer::detectRotation()
 {
-    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
-
-    int orientation = QExifImageHeader(absoluteFilePath).value(QExifImageHeader::Orientation).toShort();
-
-    RotationState rotation;
-    switch(orientation){
-    case 6: rotation = CLOCKWISE; break;
-    case 3: rotation = REVERSE; break;
-    case 8: rotation = COUNTERCLOCKWISE; break;
-    default: rotation = NO_ROTATION;
+    QAction *action = qobject_cast<QAction*>(sender());
+    if(action){
+        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
+        detectRotation(absoluteFilePathList);
     }
+}
 
-    qDebug() << mapImages[absoluteFilePath]->rotation << rotation;
+void Resizer::detectRotation(QString absoluteFilePath)
+{
+    detectRotation(QStringList() << absoluteFilePath);
+}
 
-    if(rotation==mapImages[absoluteFilePath]->rotation)
-        return;
+void Resizer::detectRotation(QStringList absoluteFilePathList)
+{
+    foreach(QString absoluteFilePath, absoluteFilePathList){
+        int orientation = QExifImageHeader(absoluteFilePath).value(QExifImageHeader::Orientation).toShort();
 
-    QTransform transform;
-    switch(mapImages[absoluteFilePath]->rotation){
-    case CLOCKWISE: transform.rotate(-90); break;
-    case REVERSE: transform.rotate(-180); break;
-    case COUNTERCLOCKWISE: transform.rotate(-270); break;
-    default: break;
+        RotationState rotation;
+        switch(orientation){
+        case 6: rotation = CLOCKWISE; break;
+        case 3: rotation = REVERSE; break;
+        case 8: rotation = COUNTERCLOCKWISE; break;
+        default: rotation = NO_ROTATION;
+        }
+
+        if(rotation==mapImages[absoluteFilePath]->rotation)
+            continue;
+
+        QTransform transform;
+        switch(mapImages[absoluteFilePath]->rotation){
+        case CLOCKWISE: transform.rotate(-90); break;
+        case REVERSE: transform.rotate(-180); break;
+        case COUNTERCLOCKWISE: transform.rotate(-270); break;
+        default: break;
+        }
+        switch(rotation){
+        case CLOCKWISE: transform.rotate(90); break;
+        case REVERSE: transform.rotate(180); break;
+        case COUNTERCLOCKWISE: transform.rotate(270); break;
+        default: break;
+        }
+
+        QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
+        pix = pix.transformed(transform);
+        mapImages[absoluteFilePath]->rotation = rotation;
+
+        mapImages[absoluteFilePath]->label->setPixmap(pix);
     }
-    switch(rotation){
-    case CLOCKWISE: transform.rotate(90); break;
-    case REVERSE: transform.rotate(180); break;
-    case COUNTERCLOCKWISE: transform.rotate(270); break;
-    default: break;
-    }
-
-    QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
-    pix = pix.transformed(transform);
-    mapImages[absoluteFilePath]->rotation = rotation;
-
-    mapImages[absoluteFilePath]->label->setPixmap(pix);
 }
 
 void Resizer::resetRotation()
 {
-    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
-
-    if(mapImages[absoluteFilePath]->rotation==NO_ROTATION)
-        return;
-
-
-    QTransform transform;
-    switch(mapImages[absoluteFilePath]->rotation){
-    case CLOCKWISE: transform.rotate(-90); break;
-    case REVERSE: transform.rotate(-180); break;
-    case COUNTERCLOCKWISE: transform.rotate(-270); break;
-    default: break;
+    QAction *action = qobject_cast<QAction*>(sender());
+    if(action){
+        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
+        resetRotation(absoluteFilePathList);
     }
+}
 
-    QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
-    pix = pix.transformed(transform);
+void Resizer::resetRotation(QString absoluteFilePath)
+{
+    resetRotation(QStringList() << absoluteFilePath);
+}
 
-    mapImages[absoluteFilePath]->label->setPixmap(pix);
-    mapImages[absoluteFilePath]->rotation = NO_ROTATION;
+void Resizer::resetRotation(QStringList absoluteFilePathList)
+{
+    foreach(QString absoluteFilePath, absoluteFilePathList){
+        if(mapImages[absoluteFilePath]->rotation==NO_ROTATION)
+            continue;
+
+        QTransform transform;
+        switch(mapImages[absoluteFilePath]->rotation){
+        case CLOCKWISE: transform.rotate(-90); break;
+        case REVERSE: transform.rotate(-180); break;
+        case COUNTERCLOCKWISE: transform.rotate(-270); break;
+        default: break;
+        }
+
+        QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
+        pix = pix.transformed(transform);
+
+        mapImages[absoluteFilePath]->label->setPixmap(pix);
+        mapImages[absoluteFilePath]->rotation = NO_ROTATION;
+    }
 }
 
 void Resizer::rotateLeft()
 {
-    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
-
-    QTransform transform;
-    transform.rotate(-90);
-
-    QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
-    pix = pix.transformed(transform);
-
-    mapImages[absoluteFilePath]->label->setPixmap(pix);
-
-    RotationState rotation;
-    if(mapImages[absoluteFilePath]->rotation==NO_ROTATION){
-        rotation = COUNTERCLOCKWISE;
-    }else{
-        rotation = static_cast<RotationState>(mapImages[absoluteFilePath]->rotation-1);
+    QAction *action = qobject_cast<QAction*>(sender());
+    if(action){
+        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
+        rotateLeft(absoluteFilePathList);
     }
+}
 
-    mapImages[absoluteFilePath]->rotation = rotation;
+void Resizer::rotateLeft(QString absoluteFilePath)
+{
+    rotateLeft(QStringList() << absoluteFilePath);
+}
+
+void Resizer::rotateLeft(QStringList absoluteFilePathList)
+{
+    foreach(QString absoluteFilePath, absoluteFilePathList){
+        QTransform transform;
+        transform.rotate(-90);
+
+        QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
+        pix = pix.transformed(transform);
+
+        mapImages[absoluteFilePath]->label->setPixmap(pix);
+
+        RotationState rotation;
+        if(mapImages[absoluteFilePath]->rotation==NO_ROTATION){
+            rotation = COUNTERCLOCKWISE;
+        }else{
+            rotation = static_cast<RotationState>(mapImages[absoluteFilePath]->rotation-1);
+        }
+
+        mapImages[absoluteFilePath]->rotation = rotation;
+    }
 }
 
 void Resizer::rotateRight()
 {
-    QString absoluteFilePath = qobject_cast<QAction*>(sender())->data().toString();
+    QAction *action = qobject_cast<QAction*>(sender());
+    if(action){
+        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
+        rotateRight(absoluteFilePathList);
+    }
+}
 
-    QTransform transform;
-    transform.rotate(90);
+void Resizer::rotateRight(QString absoluteFilePath)
+{
+    rotateRight(QStringList() << absoluteFilePath);
+}
 
-    QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
-    pix = pix.transformed(transform);
+void Resizer::rotateRight(QStringList absoluteFilePathList)
+{
+    foreach(QString absoluteFilePath, absoluteFilePathList){
+        QTransform transform;
+        transform.rotate(90);
 
-    mapImages[absoluteFilePath]->label->setPixmap(pix);
+        QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
+        pix = pix.transformed(transform);
 
-    RotationState rotation = static_cast<RotationState>((mapImages[absoluteFilePath]->rotation+1)%4);
+        mapImages[absoluteFilePath]->label->setPixmap(pix);
 
-    mapImages[absoluteFilePath]->rotation = rotation;
+        RotationState rotation = static_cast<RotationState>((mapImages[absoluteFilePath]->rotation+1)%4);
+
+        mapImages[absoluteFilePath]->rotation = rotation;
+    }
 }
 
 void Resizer::repaintGrid()
 {
-    int k =0;
-    foreach(ImageInfo *img, mapImages){
-        ui->gridLayout->addWidget(img->label,k/nbColumns_,k%nbColumns_,Qt::AlignHCenter);
-        k++;
+    QList<QLayoutItem*> list;
+    for(int k=0;k<ui->gridLayout->count();k++){
+        list << ui->gridLayout->itemAt(k);
+    }
+
+    for(int k=0;k<list.size();k++){
+        ui->gridLayout->addWidget(list.at(k)->widget(),k/nbColumns_,k%nbColumns_,Qt::AlignHCenter);
     }
 }
 

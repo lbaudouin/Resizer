@@ -1,5 +1,5 @@
 *** unity integration
-- fix sorting on resizing
-- use QLibrary instead of plugins ?
+*** fix sorting on resizing
 - redefine progress max if unvalid image
 - generate bipmap from SVG
+- select region

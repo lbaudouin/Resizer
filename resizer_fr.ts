@@ -76,7 +76,7 @@
     <message>
         <location filename="resizer.ui" line="89"/>
         <location filename="resizer.ui" line="136"/>
-        <location filename="resizer.cpp" line="422"/>
+        <location filename="resizer.cpp" line="659"/>
         <source>Logo</source>
         <translation>Logo</translation>
     </message>
@@ -168,7 +168,7 @@
     </message>
     <message>
         <location filename="resizer.ui" line="368"/>
-        <location filename="resizer.cpp" line="129"/>
+        <location filename="resizer.cpp" line="132"/>
         <source>Small</source>
         <translation>Réduites</translation>
     </message>
@@ -219,23 +219,36 @@
     </message>
     <message>
         <location filename="resizer.ui" line="553"/>
-        <location filename="resizer.cpp" line="507"/>
+        <location filename="resizer.cpp" line="744"/>
         <source>About</source>
         <translation>A propos</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="169"/>
+        <location filename="resizer.cpp" line="172"/>
         <source>Select a Folder</source>
         <translation>Choisir un dossier</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="183"/>
+        <location filename="resizer.cpp" line="189"/>
         <source>Select Files</source>
         <translation>Choisir des ficihiers</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="183"/>
-        <location filename="resizer.cpp" line="408"/>
+        <location filename="resizer.cpp" line="449"/>
+        <source>This will delete the image files from your computer.
+Are you sure to continue ?</source>
+        <translation>Ceci va supprimer les images de votre ordinateur.
+Etes-vous certain de vouloir continuer ?</translation>
+    </message>
+    <message>
+        <location filename="resizer.cpp" line="452"/>
+        <source>This will delete the image file &apos;%1&apos; from your computer.
+Are you sure to continue ?</source>
+        <translation>Ceci va supprimer l&apos;image &apos;%1&apos; de votre ordinateur.
+Etes-vous certain de vouloir continuer ?</translation>
+    </message>
+    <message>
+        <location filename="resizer.cpp" line="645"/>
         <source>Image files (*.jpg *.jpeg *.png)</source>
         <translation>Image (*.jpg *.jpeg *.png)</translation>
     </message>
@@ -244,70 +257,94 @@
         <translation type="obsolete">Chargement</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="34"/>
+        <location filename="resizer.cpp" line="37"/>
         <source>Cancel</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="35"/>
+        <location filename="resizer.cpp" line="38"/>
         <source>Please wait</source>
         <translation>Veuillez patienter</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="74"/>
+        <location filename="resizer.cpp" line="77"/>
         <source>Resize</source>
         <translation>Redimensionner</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="197"/>
+        <location filename="resizer.cpp" line="189"/>
+        <source>Image files (%1)</source>
+        <translation>Image (%1)</translation>
+    </message>
+    <message>
+        <location filename="resizer.cpp" line="203"/>
         <source>Loading...</source>
         <translation>Chargement...</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="321"/>
+        <location filename="resizer.cpp" line="371"/>
+        <source>Detect rotation</source>
+        <translation>Rotation automatique</translation>
+    </message>
+    <message>
+        <location filename="resizer.cpp" line="372"/>
+        <source>Reset rotation</source>
+        <translation>Ré-initialiser la rotation</translation>
+    </message>
+    <message>
+        <location filename="resizer.cpp" line="373"/>
+        <source>Rotate to left</source>
+        <translation>Tourner vers la gauche</translation>
+    </message>
+    <message>
+        <location filename="resizer.cpp" line="374"/>
+        <source>Rotate to right</source>
+        <translation>Tourner vers la droite</translation>
+    </message>
+    <message>
+        <location filename="resizer.cpp" line="376"/>
         <source>Remove from grid</source>
         <translation>Retirer de la grille</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="322"/>
-        <location filename="resizer.cpp" line="364"/>
+        <location filename="resizer.cpp" line="377"/>
+        <location filename="resizer.cpp" line="447"/>
         <source>Delete file</source>
         <translation>Supprimer le fichier</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="365"/>
         <source>This will delete the image from your computer.
 Are you sure to continue ?</source>
-        <translation>Ceci va supprimer l&apos;image de votre ordinateur.
+        <translation type="obsolete">Ceci va supprimer l&apos;image de votre ordinateur.
 Etes-vous certain de vouloir continuer ?</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="367"/>
+        <location filename="resizer.cpp" line="455"/>
         <source>Move to Trash</source>
         <translation>Mettre à la Corbeille</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="369"/>
+        <location filename="resizer.cpp" line="457"/>
         <source>Remove file</source>
         <translation>Supprimer le fichier</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="408"/>
+        <location filename="resizer.cpp" line="645"/>
         <source>Select Logo</source>
         <translation>Choisir un logo</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="432"/>
+        <location filename="resizer.cpp" line="669"/>
         <source>Warning</source>
         <translation>Attention</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="432"/>
+        <location filename="resizer.cpp" line="669"/>
         <source>You need to set an output subfolder name</source>
         <translation>Vous devez entrer un sous-dossier de sortie</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="437"/>
+        <location filename="resizer.cpp" line="674"/>
         <source>Resizing...</source>
         <translation>Redimensionnement...</translation>
     </message>
@@ -316,7 +353,7 @@ Etes-vous certain de vouloir continuer ?</translation>
         <translation type="obsolete">Progression</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="508"/>
+        <location filename="resizer.cpp" line="745"/>
         <source>Written by %1 (%2)
 Version: %3</source>
         <comment>author, year, version</comment>
@@ -324,7 +361,7 @@ Version: %3</source>
 Version : %3</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="539"/>
+        <location filename="resizer.cpp" line="776"/>
         <source>Information</source>
         <translation>Information</translation>
     </message>

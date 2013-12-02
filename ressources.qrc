@@ -13,6 +13,7 @@
         <file alias="right">images/right.png</file>
         <file alias="auto">images/auto.png</file>
         <file alias="cancel">images/cancel.png</file>
+        <file alias="check">images/check.png</file>
     </qresource>
     <qresource prefix="/lang">
         <file alias="lang_fr">resizer_fr.qm</file>

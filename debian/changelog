@@ -1,3 +1,10 @@
+resizer (0.1.7) precise; urgency=low
+
+  * Add manual rotation/remove/delete
+  * Open only writable image format
+
+ -- Léo Baudouin <baudouin.leo@gmail.com>  Mon, 02 Dec 2013 11:26:38 +0100
+
 resizer (0.1.6) precise; urgency=low
 
   * Add drag and drop action

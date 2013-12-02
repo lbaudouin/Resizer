@@ -113,12 +113,26 @@ public slots:
     void imageLoaded(QString absoluteFilePath, ImageData imageData);
     void resizeFinished(QString absoluteFilePath);
 
-    void removeImage(QString absoluteFilePath = QString());
+    void removeImage();
     void deleteImage();
     void detectRotation();
     void resetRotation();
     void rotateLeft();
     void rotateRight();
+
+    void removeImage(QString);
+    void deleteImage(QString);
+    void detectRotation(QString);
+    void resetRotation(QString);
+    void rotateLeft(QString);
+    void rotateRight(QString);
+
+    void removeImage(QStringList);
+    void deleteImage(QStringList);
+    void detectRotation(QStringList);
+    void resetRotation(QStringList);
+    void rotateLeft(QStringList);
+    void rotateRight(QStringList);
 
 signals:
     void needToShow();

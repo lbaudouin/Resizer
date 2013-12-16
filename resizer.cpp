@@ -8,6 +8,8 @@ Resizer::Resizer(QWidget *parent) :
     ui->setupUi(this);
 
     QCoreApplication::setAttribute(Qt::AA_DontShowIconsInMenus,false);
+    this->setAttribute(Qt::WA_AlwaysShowToolTips,true);
+
     qRegisterMetaType<ImageData>("ImageData");
 
     QStringList plugins;
@@ -313,8 +315,6 @@ void Resizer::imageLoaded(QString absoluteFilePath, ImageData imgData)
 
     QLabel *label = mapImages[absoluteFilePath]->label;
     label->setPixmap(QPixmap::fromImage(img));
-    label->setStatusTip(mapImages[absoluteFilePath]->fileinfo.fileName());
-    label->setToolTip(mapImages[absoluteFilePath]->fileinfo.fileName());
 
     emit this->updateNumber( mapImages.count() );
 
@@ -366,10 +366,9 @@ void Resizer::displayLabelMenu(QPoint pt)
     }
 
 
-
     QMenu *menu = new QMenu(this);
     QAction *actionAuto = menu->addAction(QIcon(":images/auto"),tr("Detect rotation"),this,SLOT(detectRotation()));
-    QAction *actionReset = menu->addAction(QIcon(":images/cancel"),tr("Reset rotation"),this,SLOT(resetRotation()));
+    QAction *actionReset = menu->addAction(QIcon(":images/reset"),tr("Reset rotation"),this,SLOT(resetRotation()));
     QAction *actionLeft = menu->addAction(QIcon(":images/left"),tr("Rotate to left"),this,SLOT(rotateLeft()));
     QAction *actionRigth = menu->addAction(QIcon(":images/right"),tr("Rotate to right"),this,SLOT(rotateRight()));
     menu->addSeparator();
@@ -420,7 +419,9 @@ void Resizer::removeImage(QStringList absoluteFilePathList)
         ui->gridLayout->removeWidget(mapImages[absoluteFilePath]->label);
 
         mapImages.remove(absoluteFilePath);
+        emit this->updateNumber( mapImages.count() );
     }
+
 }
 
 void Resizer::deleteImage()

@@ -9,6 +9,7 @@
 
 #include <QFile>
 #include <QFileInfo>
+#include <QDir>
 
 #include <QProcess>
 
@@ -30,8 +31,6 @@ public:
     inline void setMessageUrl(QString url) {messageUrl = url.trimmed();}
     inline void setVersionUrl(QString url) {versionUrl = url.trimmed();}
     inline void setExecUrl(QString url) {execUrl = url.trimmed();}
-    //inline void setZipUrl(QString url) {zipUrl = url.trimmed();}
-    //inline void setLzmaUrl(QString url) {lzmaUrl = url.trimmed();}
 
     inline void setExecFilename(QString exec) {execFilename = exec;}
 
@@ -52,8 +51,6 @@ private:
     QString messageUrl;
     QString versionUrl;
     QString execUrl;
-    //QString zipUrl;
-    //QString lzmaUrl;
 
     QString execFilename;
     QString updateFilename;

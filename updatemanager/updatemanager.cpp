@@ -46,60 +46,95 @@ void UpdateManager::displayMessage()
     if(reply->error()!=QNetworkReply::NoError){
         return;
     }
-    QString message(reply->readAll());
+    QString text(reply->readAll());
 
-    if(message.isEmpty())
+    if(text.isEmpty())
         return;
 
     QSettings settings(QCoreApplication::applicationName(),"config");
     QDateTime previous = settings.value("message/date").toDateTime();
 
-    QString header;
+    QStringList messages = text.split("\n");
 
-    if(message.startsWith(":date=")){
-        message.remove(0,6);
-        QString datetimeString = message.section(" ",0,0);
-        QDateTime datetime = QDateTime::fromString(datetimeString,Qt::ISODate);
+    foreach(QString message, messages){
+        QString header;
+        QDateTime datetime;
+        QMessageBox::Icon icon = QMessageBox::NoIcon;
+        QString minVersion;
+        QString maxVersion;
+        bool permanent = false;
 
-        if(previous.isValid()){
-            if(datetime<=previous)
-                return;
+        while(message.startsWith(":")){
+            QString info = message.section(" ",0,0).trimmed();
+
+            if(info.startsWith(":date=")){
+                info.remove(0,QString(":date=").length());
+                datetime = QDateTime::fromString(info,Qt::ISODate);
+
+                if(datetime.isValid()){
+                    settings.setValue("message/date",datetime);
+                }
+
+                header = tr("Date:") + QString(" %1\n\n").arg(datetime.toString("DD-MM-YYY HH:mm::ss"));
+            }
+
+            if(info.startsWith(":icon=")){
+                info.remove(0,QString(":icon=").length());
+                if(info=="critical")
+                    icon = QMessageBox::Critical;
+                if(info=="warning")
+                    icon = QMessageBox::Warning;
+                if(info=="information")
+                    icon = QMessageBox::Information;
+                if(info=="question")
+                    icon = QMessageBox::Question;
+            }
+
+            if(info.startsWith(":min=")){
+                info.remove(0,QString(":min=").length());
+                minVersion = info;
+            }
+            if(info.startsWith(":max=")){
+                info.remove(0,QString(":max=").length());
+                maxVersion = info;
+            }
+
+            if(info.startsWith(":permanent")){
+                permanent = true;
+            }
+            message = message.section(" ",1);
         }
-        settings.setValue("message/date",datetime);
 
-        message.remove(datetimeString);
-        while(message.startsWith(' '))
-            message.remove(0,1);
+        if(!permanent){
+            if(previous.isValid() && datetime.isValid()){
+                if(datetime<=previous)
+                    continue;
+            }
+        }
 
-        header = tr("Date:") + QString(" %1\n\n").arg(datetime.toString(Qt::TextDate));
-    }else{
-        return;
+        if(!minVersion.isEmpty()){
+            if(currentVersion<minVersion)
+                continue;
+        }
+
+        if(!maxVersion.isEmpty()){
+            if(currentVersion>maxVersion)
+                continue;
+        }
+
+        if(!header.isEmpty()){
+            message.prepend(header);
+        }
+
+        if(message.isEmpty())
+            continue;
+
+        QMessageBox mess;
+        mess.setWindowTitle(tr("Message"));
+        mess.setIcon(icon);
+        mess.setText(message);
+        mess.exec();
     }
-
-    QMessageBox mess;
-    mess.setWindowTitle(tr("Message"));
-    if(message.startsWith(":critical ")){
-        mess.setIcon(QMessageBox::Critical);
-        message.remove(0,10);
-    }else if(message.startsWith(":warning ")){
-        mess.setIcon(QMessageBox::Warning);
-        message.remove(0,9);
-    }else if(message.startsWith(":question ")){
-        mess.setIcon(QMessageBox::Question);
-        message.remove(0,10);
-    }else if(message.startsWith(":information ")){
-        mess.setIcon(QMessageBox::Critical);
-        message.remove(0,13);
-    }else{
-        mess.setIcon(QMessageBox::NoIcon);
-    }
-
-    if(!header.isEmpty()){
-        message.prepend(header);
-    }
-
-    mess.setText(message);
-    mess.exec();
 }
 
 void UpdateManager::startUpdate(QString url)
@@ -162,23 +197,20 @@ void UpdateManager::saveExec()
         return;
     }
 
-    /*QString filename = QFileInfo(reply->url().toString()).fileName();
-    if(!filename.endsWith(".exe")){
-        QMessageBox::warning(this,tr("Warning"),tr("Error in filename: %1").arg(filename));
+    QString filename = QFileInfo(reply->request().url().toLocalFile()).fileName();
+
+    //QFile file(filename);
+    QFile file(QDir::tempPath() + QDir::separator() + filename);
+    if(!file.open(QFile::WriteOnly)){
+        QMessageBox::critical(this,tr("Warning"),tr("Can't write file: %1").arg(QFileInfo(file).absoluteFilePath()));
         return;
-    }*/
-
-    QString filename = execFilename;
-    filename.insert(filename.size()-4,"-update");
-
-    QFile file(filename);
-    file.open(QFile::WriteOnly);
+    }
 
     file.write(reply->readAll());
 
     file.close();
 
-    //Restart software
+    //Start external update installer
     QMessageBox mess;
     mess.setText(tr("Please restart software to use the new version"));
     mess.addButton(tr("Restart"),QMessageBox::AcceptRole);
@@ -211,6 +243,13 @@ void UpdateManager::abort()
 void UpdateManager::setDiscret(bool discret)
 {
     discretUpdate = discret;
+}
+
+int UpdateManager::getVersionID(QString version)
+{
+    QStringList n = version.split(".");
+    if(n.size()!=3) return 0;
+    return n.at(0).toInt()*100*100 + n.at(1).toInt()*100 + n.at(2).toInt();
 }
 
 bool UpdateManager::replaceByUpdate()
@@ -255,11 +294,4 @@ bool UpdateManager::replaceMainExec()
         return true;
     }
     return false;
-}
-
-int UpdateManager::getVersionID(QString version)
-{
-    QStringList n = version.split(".");
-    if(n.size()!=3) return 0;
-    return n.at(0).toInt()*100*100 + n.at(1).toInt()*100 + n.at(2).toInt();
 }

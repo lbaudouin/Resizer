@@ -4,6 +4,8 @@
 #include <QLabel>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QFileInfo>
+#include <QToolTip>
 
 #include <QDebug>
 
@@ -30,8 +32,11 @@ protected:
     void leaveEvent(QEvent *);
     void paintEvent(QPaintEvent *e);
 
+    //bool event(QEvent *e);
+
 private:
     QString absoluteFilePath_;
+    QString filename_;
     bool displayIcons_;
     bool checked_;
     QRect autoRect_,resetRect_,leftRect_,rightRect_,removeRect_,deleteRect_,checkRect_;

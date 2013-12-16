@@ -1,18 +1,22 @@
 #include <mylabel.h>
 
-MyLabel::MyLabel(QWidget *parent) : QLabel(parent), absoluteFilePath_(""), displayIcons_(false), checked_(false)
+MyLabel::MyLabel(QWidget *parent) : QLabel(parent), absoluteFilePath_(""), filename_(""), displayIcons_(false), checked_(false)
 {
     this->setMouseTracking(true);
 }
 
-MyLabel::MyLabel(QString absoluteFilePath, QWidget *parent) : QLabel(parent), absoluteFilePath_(absoluteFilePath), displayIcons_(false), checked_(false)
+MyLabel::MyLabel(QString absoluteFilePath, QWidget *parent) : QLabel(parent), displayIcons_(false), checked_(false)
 {
     this->setMouseTracking(true);
+    setAbsoluteFilePath(absoluteFilePath);
 }
 
 void MyLabel::setAbsoluteFilePath(QString absoluteFilePath)
 {
     absoluteFilePath_ = absoluteFilePath;
+    filename_ = QFileInfo(absoluteFilePath_).fileName();
+
+    this->setToolTip(filename_);
 }
 
 QString MyLabel::getAbsoluteFilePath()
@@ -59,7 +63,6 @@ void MyLabel::mousePressEvent(QMouseEvent *e)
 
 void MyLabel::mouseReleaseEvent(QMouseEvent *e)
 {
-
     if(autoRect_.contains(e->pos())){
         emit this->autoPressed(absoluteFilePath_);
     }
@@ -83,12 +86,37 @@ void MyLabel::mouseReleaseEvent(QMouseEvent *e)
 
 void MyLabel::mouseMoveEvent(QMouseEvent *e)
 {
-    if(autoRect_.contains(e->pos()) || resetRect_.contains(e->pos()) || leftRect_.contains(e->pos()) || rightRect_.contains(e->pos()) ||
-       removeRect_.contains(e->pos()) || deleteRect_.contains(e->pos()) ){
+    if(autoRect_.contains(e->pos())){
         this->setCursor(Qt::PointingHandCursor);
+        //this->setStatusTip(tr("Detect rotation"));
+        this->setToolTip(tr("Detect rotation"));
+    }else if(resetRect_.contains(e->pos())){
+        this->setCursor(Qt::PointingHandCursor);
+        //this->setStatusTip(tr("Reset rotation"));
+        this->setToolTip(tr("Reset rotation"));
+    }else if(leftRect_.contains(e->pos())){
+        this->setCursor(Qt::PointingHandCursor);
+        //this->setStatusTip(tr("Rotate to left"));
+        this->setToolTip(tr("Rotate to left"));
+    }else if(rightRect_.contains(e->pos())){
+        this->setCursor(Qt::PointingHandCursor);
+        //this->setStatusTip(tr("Rotate to right"));
+        this->setToolTip(tr("Rotate to right"));
+    }else if(removeRect_.contains(e->pos())){
+        this->setCursor(Qt::PointingHandCursor);
+        //this->setStatusTip(tr("Remove from grid"));
+        this->setToolTip(tr("Remove from grid"));
+    }else if(deleteRect_.contains(e->pos())){
+        this->setCursor(Qt::PointingHandCursor);
+        //this->setStatusTip(tr("Delete file"));
+        this->setToolTip(tr("Delete file"));
     }else{
         this->setCursor(Qt::ArrowCursor);
+        //this->setStatusTip("");
+        this->setToolTip(filename_);
     }
+    //QToolTip::showText(e->globalPos(), this->toolTip());
+    //QStatusTipEvent(this->statusTip());
 }
 
 void MyLabel::enterEvent(QEvent *)
@@ -130,7 +158,7 @@ void MyLabel::paintEvent(QPaintEvent *e){
 
     if(displayIcons_){
             painter.drawPixmap(autoRect_.topLeft(),QPixmap(":images/auto").scaled(32,32));
-            painter.drawPixmap(resetRect_.topLeft(),QPixmap(":images/cancel").scaled(32,32));
+            painter.drawPixmap(resetRect_.topLeft(),QPixmap(":images/reset").scaled(32,32));
             painter.drawPixmap(leftRect_.topLeft(),QPixmap(":images/left").scaled(32,32));
             painter.drawPixmap(rightRect_.topLeft(),QPixmap(":images/right").scaled(32,32));
             painter.drawPixmap(removeRect_.topLeft(),QPixmap(":images/remove").scaled(32,32));

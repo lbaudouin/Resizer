@@ -148,6 +148,8 @@ void Saver::run()
         painter.end();
     }
 
+    small.save(output);
+
     //exif.setValue(QExifImageHeader::Orientation,0);
     //exif.setValue(QExifImageHeader::ImageWidth,small.width());
     //exif.setValue(QExifImageHeader::ImageLength,small.height());

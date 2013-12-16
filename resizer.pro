@@ -47,4 +47,5 @@ win32 {
 
 OTHER_FILES += \
     resizer.rc \
-    TODO
+    TODO \
+    Resizer.exe.manifest

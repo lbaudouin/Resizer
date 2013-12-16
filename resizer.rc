@@ -1,1 +1,2 @@
- IDI_ICON1               ICON    DISCARDABLE     "images/Resizer.ico"
+IDI_ICON1               ICON    DISCARDABLE     "images/Resizer.ico"
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "Resizer.exe.manifest"

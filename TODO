@@ -3,3 +3,6 @@
 - redefine progress max if unvalid image
 - generate bipmap from SVG
 - select region
+- move tooltip faster
+- add status tip
+- compress as zip

@@ -1,4 +1,4 @@
-#define CURRENT_VERSION "0.1.7"
+#define CURRENT_VERSION "0.1.9"
 
 #include <QtGui/QApplication>
 #include <QTranslator>
@@ -88,8 +88,7 @@ int main(int argc, char *argv[])
 #if defined(__WIN32__)
     up->setMessageUrl("http://lbaudouin.chez.com/RESIZER_MESSAGE");
     up->setVersionUrl("http://lbaudouin.chez.com/RESIZER_VERSION");
-    up->setExecUrl("http://lbaudouin.chez.com/Resizer.exe");
-    //up->setZipUrl("http://lbaudouin.chez.com/Resizer.zip");
+    up->setExecUrl("http://lbaudouin.chez.com/Resizer-update.exe");
     up->getMessage();
     up->setDiscret(true);
     up->startUpdate();

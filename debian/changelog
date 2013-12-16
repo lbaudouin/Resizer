@@ -1,3 +1,11 @@
+resizer (0.1.8) precise; urgency=low
+
+  * Add tootips
+  * Change some icons
+  * Fix mistake on file saving
+
+ -- Léo Baudouin <baudouin.leo@gmail.com>  Tue, 03 Dec 2013 14:45:27 +0100
+
 resizer (0.1.7) precise; urgency=low
 
   * Add manual rotation/remove/delete

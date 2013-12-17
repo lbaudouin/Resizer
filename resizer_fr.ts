@@ -109,7 +109,7 @@
     <message>
         <location filename="resizer.ui" line="89"/>
         <location filename="resizer.ui" line="136"/>
-        <location filename="resizer.cpp" line="660"/>
+        <location filename="resizer.cpp" line="667"/>
         <source>Logo</source>
         <translation>Logo</translation>
     </message>
@@ -201,7 +201,7 @@
     </message>
     <message>
         <location filename="resizer.ui" line="368"/>
-        <location filename="resizer.cpp" line="134"/>
+        <location filename="resizer.cpp" line="141"/>
         <source>Small</source>
         <translation>Réduites</translation>
     </message>
@@ -252,36 +252,36 @@
     </message>
     <message>
         <location filename="resizer.ui" line="553"/>
-        <location filename="resizer.cpp" line="745"/>
+        <location filename="resizer.cpp" line="752"/>
         <source>About</source>
         <translation>A propos</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="174"/>
+        <location filename="resizer.cpp" line="181"/>
         <source>Select a Folder</source>
         <translation>Choisir un dossier</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="191"/>
+        <location filename="resizer.cpp" line="198"/>
         <source>Select Files</source>
         <translation>Choisir des ficihiers</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="450"/>
+        <location filename="resizer.cpp" line="457"/>
         <source>This will delete the image files from your computer.
 Are you sure to continue ?</source>
         <translation>Ceci va supprimer les images de votre ordinateur.
 Etes-vous certain de vouloir continuer ?</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="453"/>
+        <location filename="resizer.cpp" line="460"/>
         <source>This will delete the image file &apos;%1&apos; from your computer.
 Are you sure to continue ?</source>
         <translation>Ceci va supprimer l&apos;image &apos;%1&apos; de votre ordinateur.
 Etes-vous certain de vouloir continuer ?</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="646"/>
+        <location filename="resizer.cpp" line="653"/>
         <source>Image files (*.jpg *.jpeg *.png)</source>
         <translation>Image (*.jpg *.jpeg *.png)</translation>
     </message>
@@ -290,58 +290,58 @@ Etes-vous certain de vouloir continuer ?</translation>
         <translation type="obsolete">Chargement</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="39"/>
+        <location filename="resizer.cpp" line="46"/>
         <source>Cancel</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="40"/>
+        <location filename="resizer.cpp" line="47"/>
         <source>Please wait</source>
         <translation>Veuillez patienter</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="79"/>
+        <location filename="resizer.cpp" line="86"/>
         <source>Resize</source>
         <translation>Redimensionner</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="191"/>
+        <location filename="resizer.cpp" line="198"/>
         <source>Image files (%1)</source>
         <translation>Image (%1)</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="205"/>
+        <location filename="resizer.cpp" line="212"/>
         <source>Loading...</source>
         <translation>Chargement...</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="370"/>
+        <location filename="resizer.cpp" line="377"/>
         <source>Detect rotation</source>
         <translation>Rotation automatique</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="371"/>
+        <location filename="resizer.cpp" line="378"/>
         <source>Reset rotation</source>
         <translation>Ré-initialiser la rotation</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="372"/>
+        <location filename="resizer.cpp" line="379"/>
         <source>Rotate to left</source>
         <translation>Tourner vers la gauche</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="373"/>
+        <location filename="resizer.cpp" line="380"/>
         <source>Rotate to right</source>
         <translation>Tourner vers la droite</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="375"/>
+        <location filename="resizer.cpp" line="382"/>
         <source>Remove from grid</source>
         <translation>Retirer de la grille</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="376"/>
-        <location filename="resizer.cpp" line="448"/>
+        <location filename="resizer.cpp" line="383"/>
+        <location filename="resizer.cpp" line="455"/>
         <source>Delete file</source>
         <translation>Supprimer le fichier</translation>
     </message>
@@ -352,32 +352,32 @@ Are you sure to continue ?</source>
 Etes-vous certain de vouloir continuer ?</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="456"/>
+        <location filename="resizer.cpp" line="463"/>
         <source>Move to Trash</source>
         <translation>Mettre à la Corbeille</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="458"/>
+        <location filename="resizer.cpp" line="465"/>
         <source>Remove file</source>
         <translation>Supprimer le fichier</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="646"/>
+        <location filename="resizer.cpp" line="653"/>
         <source>Select Logo</source>
         <translation>Choisir un logo</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="670"/>
+        <location filename="resizer.cpp" line="677"/>
         <source>Warning</source>
         <translation>Attention</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="670"/>
+        <location filename="resizer.cpp" line="677"/>
         <source>You need to set an output subfolder name</source>
         <translation>Vous devez entrer un sous-dossier de sortie</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="675"/>
+        <location filename="resizer.cpp" line="682"/>
         <source>Resizing...</source>
         <translation>Redimensionnement...</translation>
     </message>
@@ -386,7 +386,7 @@ Etes-vous certain de vouloir continuer ?</translation>
         <translation type="obsolete">Progression</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="746"/>
+        <location filename="resizer.cpp" line="753"/>
         <source>Written by %1 (%2)
 Version: %3</source>
         <comment>author, year, version</comment>
@@ -394,7 +394,7 @@ Version: %3</source>
 Version : %3</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="777"/>
+        <location filename="resizer.cpp" line="784"/>
         <source>Information</source>
         <translation>Information</translation>
     </message>
@@ -419,7 +419,7 @@ Version : %3</translation>
     <message>
         <location filename="updatemanager/updatemanager.cpp" line="152"/>
         <location filename="updatemanager/updatemanager.cpp" line="196"/>
-        <location filename="updatemanager/updatemanager.cpp" line="205"/>
+        <location filename="updatemanager/updatemanager.cpp" line="207"/>
         <source>Warning</source>
         <translation>Attention</translation>
     </message>
@@ -466,45 +466,50 @@ Version : %3</translation>
         <translation>Erreur pendant le téléchargement de la mise à jour : %1</translation>
     </message>
     <message>
-        <location filename="updatemanager/updatemanager.cpp" line="205"/>
+        <location filename="updatemanager/updatemanager.cpp" line="207"/>
         <source>Can&apos;t write file: %1</source>
         <translation>Impossible d&apos;écrire le fichier : %1</translation>
     </message>
     <message>
-        <location filename="updatemanager/updatemanager.cpp" line="215"/>
-        <source>Please restart software to use the new version</source>
-        <translation>Merci de redémarrer le programme pour utiliser la nouvelle version</translation>
-    </message>
-    <message>
-        <location filename="updatemanager/updatemanager.cpp" line="216"/>
-        <source>Restart</source>
-        <translation>Redémarrer</translation>
-    </message>
-    <message>
         <location filename="updatemanager/updatemanager.cpp" line="217"/>
+        <source>Install new version now?</source>
+        <translation>Installer la nouvelle version maintenant ?</translation>
+    </message>
+    <message>
+        <location filename="updatemanager/updatemanager.cpp" line="221"/>
+        <source>%1Kb downloaded
+File path: %2</source>
+        <translation>%1Ko téléchargés
+Fichier : %2</translation>
+    </message>
+    <message>
+        <source>Please restart software to use the new version</source>
+        <translation type="obsolete">Merci de redémarrer le programme pour utiliser la nouvelle version</translation>
+    </message>
+    <message>
+        <source>Restart</source>
+        <translation type="obsolete">Redémarrer</translation>
+    </message>
+    <message>
         <source>Do not restart</source>
-        <translation>Ne pas redémarrer</translation>
+        <translation type="obsolete">Ne pas redémarrer</translation>
     </message>
     <message>
-        <location filename="updatemanager/updatemanager.cpp" line="219"/>
         <source>%1Kb downloaded</source>
-        <translation>%1Ko téléchargés</translation>
+        <translation type="obsolete">%1Ko téléchargés</translation>
     </message>
     <message>
-        <location filename="updatemanager/updatemanager.cpp" line="263"/>
         <source>Already up to date</source>
-        <translation>Déjà à jour</translation>
+        <translation type="obsolete">Déjà à jour</translation>
     </message>
     <message>
-        <location filename="updatemanager/updatemanager.cpp" line="281"/>
         <source>Error</source>
-        <translation>Erreur</translation>
+        <translation type="obsolete">Erreur</translation>
     </message>
     <message>
-        <location filename="updatemanager/updatemanager.cpp" line="281"/>
         <source>Can&apos;t remove: %1
 Please close the software</source>
-        <translation>Impossible de supprimer %1
+        <translation type="obsolete">Impossible de supprimer %1
 Veuillez fermer le programme</translation>
     </message>
 </context>

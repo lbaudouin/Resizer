@@ -113,12 +113,12 @@ void UpdateManager::displayMessage()
         }
 
         if(!minVersion.isEmpty()){
-            if(currentVersion<minVersion)
+            if(getVersionID(currentVersion)<getVersionID(minVersion))
                 continue;
         }
 
         if(!maxVersion.isEmpty()){
-            if(currentVersion>maxVersion)
+            if(getVersionID(currentVersion)>getVersionID(maxVersion))
                 continue;
         }
 
@@ -162,7 +162,7 @@ void UpdateManager::checkVersion()
         return;
     }
 
-    if(currentVersion<versionOnServer){
+    if( isNewer(versionOnServer,currentVersion) ){
         int button = QMessageBox::information(this,tr("Information"),tr("New version available : %1").arg(versionOnServer),tr("Don't download"),tr("Download"),"",1,0);
         if(button==1)
             getExec();
@@ -197,12 +197,14 @@ void UpdateManager::saveExec()
         return;
     }
 
-    QString filename = QFileInfo(reply->request().url().toLocalFile()).fileName();
+    QString filename = QFileInfo(execUrl).fileName();
 
     //QFile file(filename);
     QFile file(QDir::tempPath() + QDir::separator() + filename);
+    QFileInfo info = QFileInfo(file);
+
     if(!file.open(QFile::WriteOnly)){
-        QMessageBox::critical(this,tr("Warning"),tr("Can't write file: %1").arg(QFileInfo(file).absoluteFilePath()));
+        QMessageBox::critical(this,tr("Warning"),tr("Can't write file: %1").arg(info.absoluteFilePath()));
         return;
     }
 
@@ -212,15 +214,17 @@ void UpdateManager::saveExec()
 
     //Start external update installer
     QMessageBox mess;
-    mess.setText(tr("Please restart software to use the new version"));
-    mess.addButton(tr("Restart"),QMessageBox::AcceptRole);
-    mess.addButton(tr("Do not restart"),QMessageBox::RejectRole);
+    mess.setText(tr("Install new version now?"));
+    mess.addButton(QMessageBox::Yes);
+    mess.addButton(QMessageBox::No);
     mess.setIcon(QMessageBox::Question);
-    mess.setDetailedText(tr("%1Kb downloaded").arg((int)(file.size()/1000)));
+    mess.setDetailedText(tr("%1Kb downloaded\nFile path: %2").arg( QString::number((int)(file.size()/1000)), info.absoluteFilePath() ));
 
     int button = mess.exec();
-    if(button==QMessageBox::AcceptRole){
-        emit restart(QFileInfo(file).absoluteFilePath());
+    if(button==QMessageBox::Yes){
+        emit restart(info.absoluteFilePath());
+    }else{
+         QDesktopServices::openUrl(QUrl(QString("file:///%1").arg(info.absoluteDir().path()), QUrl::TolerantMode));
     }
     return;
 
@@ -252,46 +256,20 @@ int UpdateManager::getVersionID(QString version)
     return n.at(0).toInt()*100*100 + n.at(1).toInt()*100 + n.at(2).toInt();
 }
 
-bool UpdateManager::replaceByUpdate()
+bool UpdateManager::isNewer(QString v1, QString v2)
 {
-    updateFilename = execFilename;
-    updateFilename.insert(updateFilename.size()-4,"-update");
-    if(QFile::exists(updateFilename)){
-        QProcess process;
-        int updateID = process.execute("\""+updateFilename+"\"",QStringList() << "-v");
-        if(getVersionID(currentVersion)>=updateID){
-            emit status(tr("Already up to date"));
-            QFile::remove(updateFilename);
-        }else{
-            process.startDetached("\""+updateFilename+"\"");
-            return true;
-        }
-    }
-    return false;
-}
-
-bool UpdateManager::replaceMainExec()
-{
-    if(execFilename.contains("-update")){
-        updateFilename = execFilename;
-        execFilename = execFilename.remove("-update");
-
-        if(QFile::exists(execFilename)){
-            while(!QFile::remove(execFilename)){
-               int button = QMessageBox::critical(this,tr("Error"),tr("Can't remove: %1\nPlease close the software").arg(execFilename),QMessageBox::Cancel,QMessageBox::Retry);
-               if(button==QMessageBox::Cancel){
-                   return false;
-               }
-            }
-        }else{
-            return false;
-        }
-
-        QFile::copy(updateFilename,execFilename);
-
-        QProcess process;
-        process.startDetached("\""+execFilename+"\"");
+    if(!isValidVersion(v1))
         return true;
-    }
+
+    if(!isValidVersion(v2))
+        return false;
+
+    QStringList n1 = v1.split(".");
+    QStringList n2 = v2.split(".");
+
+    for(int i=0;i<3;i++)
+        if(n2.at(i).toInt() > n1.at(i).toInt())
+            return true;
     return false;
+
 }

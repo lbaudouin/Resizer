@@ -6,6 +6,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QDesktopServices>
 
 #include <QFile>
 #include <QFileInfo>
@@ -32,15 +33,9 @@ public:
     inline void setVersionUrl(QString url) {versionUrl = url.trimmed();}
     inline void setExecUrl(QString url) {execUrl = url.trimmed();}
 
-    inline void setExecFilename(QString exec) {execFilename = exec;}
-
-    bool replaceByUpdate();
-    bool replaceMainExec();
-
     static int getVersionID(QString version);
-
-protected:
-    bool isValidVersion(QString);
+    static bool isNewer(QString v1, QString v2);
+    static bool isValidVersion(QString);
 
 private:
     QNetworkAccessManager *manager;
@@ -51,9 +46,6 @@ private:
     QString messageUrl;
     QString versionUrl;
     QString execUrl;
-
-    QString execFilename;
-    QString updateFilename;
 
     bool discretUpdate;
 

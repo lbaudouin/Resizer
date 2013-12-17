@@ -12,9 +12,16 @@ Resizer::Resizer(QWidget *parent) :
 
     qRegisterMetaType<ImageData>("ImageData");
 
+#if defined(__WIN32__)
+    QDir dir("/usr/lib/resizer/");
+#else
+    QDir dir("plugins/");
+#endif
+
     QStringList plugins;
-    plugins << QString("/usr/lib/resizer/libunity-plugin.so");
-    //plugins << QString("plugins/libunity-plugin.so");
+    foreach(QString plugin, dir.entryList(QDir::Files | QDir::NoDotAndDotDot))
+        plugins << plugin;
+
 
     foreach(QString plugin, plugins){
         if(QFile::exists(plugin)){

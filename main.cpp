@@ -21,7 +21,8 @@ int main(int argc, char *argv[])
             return ID;
         }
         if(!strcmp(argv[i],"-n")){              //return 1 if CURRENT_VERSION > version
-            if(QString(CURRENT_VERSION)>QString(argv[i+1])) return 1;
+            if(UpdateManager::isNewer( QString(CURRENT_VERSION), QString(argv[i+1]) ) )
+                return 1;
             return 0;
         }
     }
@@ -58,13 +59,6 @@ int main(int argc, char *argv[])
 #if defined(__WIN32__)
     UpdateManager *up = new UpdateManager;
     up->setVersion(CURRENT_VERSION);
-    up->setExecFilename(argv[0]);
-
-    if(up->replaceMainExec())
-        return 0;
-
-    if(up->replaceByUpdate())
-        return 0;
 #endif
 
     Resizer w;

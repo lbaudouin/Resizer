@@ -20,6 +20,35 @@ struct ImageData{
     RotationState rotation;
 };
 
+inline ImageData loadImage(const QString &filename)
+{
+    QImage small;
+    QImageReader reader(filename);
+    QSize imageSize = reader.size();
+
+    if(imageSize.isValid()){
+        imageSize.scale(320,320,Qt::KeepAspectRatio);
+        reader.setScaledSize(imageSize);
+        small = reader.read();
+    }else{
+        small = QImage(filename).scaled(320,320,Qt::KeepAspectRatio);
+    }
+
+    ImageData imageData;
+    imageData.image = small;
+
+    int orientation = QExifImageHeader(filename).value(QExifImageHeader::Orientation).toShort();
+
+    switch(orientation){
+        case 6: imageData.rotation = CLOCKWISE; break;
+        case 3: imageData.rotation = REVERSE; break;
+        case 8: imageData.rotation = COUNTERCLOCKWISE; break;
+        default: imageData.rotation = NO_ROTATION;
+    }
+
+    return imageData;
+}
+
 class Loader : public QObject, public QRunnable
 {
     Q_OBJECT

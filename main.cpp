@@ -6,28 +6,17 @@
 #include "qtsingleapplication.h"
 #include "resizer.h"
 
-#if defined(__WIN32__)
+#ifdef Q_OS_WIN
 #include "updatemanager/updatemanager.h"
 #endif
 
+/** Main function
+ * Test if one instance is already running
+ * Translate in french if needed
+ * Download update for WINDOWS
+**/
 int main(int argc, char *argv[])
 {
-
-#if defined(__WIN32__)
-    for(int i=0;i<argc;i++){
-        if(!strcmp(argv[i],"-v")){              //return version ID integer
-            int ID = UpdateManager::getVersionID(CURRENT_VERSION);
-            qDebug() << "VersionID:" << ID;
-            return ID;
-        }
-        if(!strcmp(argv[i],"-n")){              //return 1 if CURRENT_VERSION > version
-            if(UpdateManager::isNewer( QString(CURRENT_VERSION), QString(argv[i+1]) ) )
-                return 1;
-            return 0;
-        }
-    }
-#endif
-
     QCoreApplication::setApplicationName( "resizer" );
     QtSingleApplication instance("resizer", argc, argv);
     instance.setWindowIcon( QIcon(":/images/resizer" ) );
@@ -56,11 +45,6 @@ int main(int argc, char *argv[])
         qApp->installTranslator( translatorQt );
     }
 
-#if defined(__WIN32__)
-    UpdateManager *up = new UpdateManager;
-    up->setVersion(CURRENT_VERSION);
-#endif
-
     Resizer w;
     w.handleMessage(message);
     w.setVersion(CURRENT_VERSION);
@@ -79,14 +63,17 @@ int main(int argc, char *argv[])
 
     QObject::connect(&w, SIGNAL(needToShow()), &instance, SLOT(activateWindow()));
 
-#if defined(__WIN32__)
+#ifdef Q_OS_WIN
+    UpdateManager *up = new UpdateManager;
+    QObject::connect(up,SIGNAL(restart(QString)),&w,SLOT(restart(QString)));
+    up->setVersion(CURRENT_VERSION);
     up->setMessageUrl("http://lbaudouin.chez.com/RESIZER_MESSAGE");
     up->setVersionUrl("http://lbaudouin.chez.com/RESIZER_VERSION");
     up->setExecUrl("http://lbaudouin.chez.com/Resizer-update.exe");
+    //up->setZipUrl("http://lbaudouin.chez.com/Resizer-update.zip");
     up->getMessage();
     up->setDiscret(true);
     up->startUpdate();
-    QObject::connect(up,SIGNAL(restart(QString)),&w,SLOT(restart(QString)));
 #endif
 
     return instance.exec();

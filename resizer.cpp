@@ -53,7 +53,7 @@ Resizer::Resizer(QWidget *parent) :
     ui->comboPixels->addItems( listSize );
     ui->comboPixels->setCurrentIndex(5);
     QStringList listRatio;
-    listRatio << "10" << "20" << "30" << "33" << "40" << "50" << "60" << "66" << "70" << "80" << "90" << "125" << "150" << "200" << "250" << "300";
+    listRatio << "10" << "20" << "30" << "33" << "40" << "50" << "60" << "66" << "70" << "80" << "90" << "125" << "150" << "200";
     ui->comboRatio->addItems( listRatio );
     ui->comboRatio->setCurrentIndex(3);
 
@@ -95,7 +95,6 @@ Resizer::Resizer(QWidget *parent) :
 
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(pressAbout()));
 
-    connect(this,SIGNAL(addFiles(QStringList)),this,SLOT(addList(QStringList)),Qt::QueuedConnection);
 }
 
 Resizer::~Resizer()
@@ -182,18 +181,22 @@ void Resizer::pressOpenFolder()
     if(path.isEmpty()) return;
 
     QCoreApplication::processEvents();
-    emit this->addFiles(QStringList() << path);
+
+    addFile(path);
+    //emit this->addFiles(QStringList() << path);
 }
 
 void Resizer::pressOpenFiles()
 {
     QList<QByteArray> supported = QImageWriter::supportedImageFormats();
+    //qDebug() << QImageReader::supportedImageFormats();
+    //qDebug() << QImageWriter::supportedImageFormats();
 
     QStringList filters;
     foreach(QByteArray filter, supported){
         filters << "*." + QString(filter);
     }
-    qDebug() << filters.join(" ");
+    //qDebug() << filters.join(" ");
 
     QStringList paths = QFileDialog::getOpenFileNames(this, tr("Select Files"), QDir::homePath(), tr("Image files (%1)").arg(filters.join(" ")));
     if(paths.isEmpty()) return;
@@ -203,7 +206,9 @@ void Resizer::pressOpenFiles()
         absoluteFilepaths << fi.absoluteFilePath();
     }
     QCoreApplication::processEvents();
-    emit this->addFiles(absoluteFilepaths);
+
+    //emit this->addFiles(absoluteFilepaths);
+    addList(absoluteFilepaths);
 }
 
 void Resizer::addList(QStringList paths)
@@ -368,10 +373,8 @@ void Resizer::displayLabelMenu(QPoint pt)
     foreach(ImageInfo* info, mapImages){
         if(info->label->isChecked()){
             absoluteFilePathList << info->fileinfo.absoluteFilePath();
-            info->label->setUnChecked();
         }
     }
-
 
     QMenu *menu = new QMenu(this);
     QAction *actionAuto = menu->addAction(QIcon(":images/auto"),tr("Detect rotation"),this,SLOT(detectRotation()));
@@ -391,7 +394,13 @@ void Resizer::displayLabelMenu(QPoint pt)
     actionDelete->setData(absoluteFilePathList);
 
     menu->move( qobject_cast<QWidget*>(sender())->mapToGlobal(pt) );
-    menu->show();
+    if(menu->exec()){
+        foreach(ImageInfo* info, mapImages){
+            if(info->label->isChecked()){
+                info->label->setUnChecked();
+            }
+        }
+    }
 }
 
 void Resizer::removeImage()

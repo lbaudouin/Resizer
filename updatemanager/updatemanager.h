@@ -6,11 +6,16 @@
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 #include <QDesktopServices>
+#else
+#include <QStandardPaths>
+#endif
+#include <QDir>
 
 #include <QFile>
 #include <QFileInfo>
-#include <QDir>
 
 #include <QProcess>
 
@@ -32,20 +37,26 @@ public:
     inline void setMessageUrl(QString url) {messageUrl = url.trimmed();}
     inline void setVersionUrl(QString url) {versionUrl = url.trimmed();}
     inline void setExecUrl(QString url) {execUrl = url.trimmed();}
+    //inline void setZipUrl(QString url) {zipUrl = url.trimmed();}
+    //inline void setLzmaUrl(QString url) {lzmaUrl = url.trimmed();}
 
     static int getVersionID(QString version);
-    static bool isNewer(QString v1, QString v2);
-    static bool isValidVersion(QString);
+
+protected:
+    bool isValidVersion(QString);
 
 private:
     QNetworkAccessManager *manager;
     QProgressBarDialog *progress;
+    QNetworkReply *execReply;
 
     QString currentVersion;
 
     QString messageUrl;
     QString versionUrl;
     QString execUrl;
+    //QString zipUrl;
+    //QString lzmaUrl;
 
     bool discretUpdate;
 

@@ -39,7 +39,7 @@ RESOURCES += \
 
 win32 {
     HEADERS += updatemanager/updatemanager.h \
-    updatemanager/qprogressbardialog.h
+               updatemanager/qprogressbardialog.h
     SOURCES += updatemanager/updatemanager.cpp
     TARGET = Resizer
     RC_FILE = resizer.rc
@@ -48,4 +48,4 @@ win32 {
 OTHER_FILES += \
     resizer.rc \
     TODO \
-    Resizer.exe.manifest
+    win32/Resizer.exe.manifest

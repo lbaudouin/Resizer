@@ -136,7 +136,7 @@ public slots:
 
 signals:
     void needToShow();
-    void addFiles(QStringList);
+    //void addFiles(QStringList);
 
     void finished();
     void updateProgressBar(int min, int max, int value);

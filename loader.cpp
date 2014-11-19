@@ -10,6 +10,11 @@ Loader::~Loader()
 {
 }
 
+void Loader::setImageID(int id)
+{
+    m_id = id;
+}
+
 void Loader::setFileInfo(QFileInfo info)
 {
     info_ = info;
@@ -34,22 +39,22 @@ void Loader::run()
         small = QImage(info_.absoluteFilePath()).scaled(320,320,Qt::KeepAspectRatio);
     }
 
-    ImageData id;
-    id.image = small;
+    ImageData imageData;
+    imageData.image = small;
 
     if(needRotation_){
         int orientation = QExifImageHeader(info_.absoluteFilePath()).value(QExifImageHeader::Orientation).toShort();
 
         switch(orientation){
-        case 6: id.rotation = CLOCKWISE; break;
-        case 3: id.rotation = REVERSE; break;
-        case 8: id.rotation = COUNTERCLOCKWISE; break;
-        default: id.rotation = NO_ROTATION;
+        case 6: imageData.rotation = CLOCKWISE; break;
+        case 3: imageData.rotation = REVERSE; break;
+        case 8: imageData.rotation = COUNTERCLOCKWISE; break;
+        default: imageData.rotation = NO_ROTATION;
         }
     }else{
-        id.rotation = NO_ROTATION;
+        imageData.rotation = NO_ROTATION;
     }
 
-    emit this->imageLoaded(info_.absoluteFilePath(),id);
+    emit this->imageLoaded(m_id,imageData);
 
 }

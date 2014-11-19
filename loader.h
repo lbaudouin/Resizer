@@ -16,6 +16,7 @@
 #include "rotationstate.h"
 
 struct ImageData{
+    int id;
     QImage image;
     RotationState rotation;
 };
@@ -57,16 +58,18 @@ public:
     ~Loader();
     void run();
 
+    void setImageID(int id);
     void setFileInfo(QFileInfo info);
     void setNeedRotation(bool needRotation = true);
 
 private:
+    int m_id;
     QFileInfo info_;
     bool needRotation_;
 
 signals:
-    void imageLoaded(QString absoluteFilePath, QImage img);
-    void imageLoaded(QString absoluteFilePath, ImageData imgData);
+    void imageLoaded(int id, QImage img);
+    void imageLoaded(int id, ImageData imgData);
     
 };
 

@@ -1,26 +1,31 @@
 #include "resizer.h"
 #include "ui_resizer.h"
 
+Q_DECLARE_METATYPE( QList<int> )
+
 Resizer::Resizer(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::Resizer)
+    ui(new Ui::Resizer), m_idCount(0)
 {
     ui->setupUi(this);
+
+    setToolButtonsEnabled(false);
 
     QCoreApplication::setAttribute(Qt::AA_DontShowIconsInMenus,false);
     this->setAttribute(Qt::WA_AlwaysShowToolTips,true);
 
     qRegisterMetaType<ImageData>("ImageData");
 
-#if defined(__WIN32__)
-    QDir dir("/usr/lib/resizer/");
-#else
+
+#ifdef Q_OS_WIN
     QDir dir("plugins/");
+#else
+    QDir dir("/usr/lib/resizer/");
 #endif
 
     QStringList plugins;
     foreach(QString plugin, dir.entryList(QDir::Files | QDir::NoDotAndDotDot))
-        plugins << plugin;
+        plugins << dir.absoluteFilePath(plugin);
 
 
     foreach(QString plugin, plugins){
@@ -35,11 +40,27 @@ Resizer::Resizer(QWidget *parent) :
 
                     qDebug() << "Plugin connected:" << plugin;
                 }
+            }else{
+                qDebug() << "Failed to load:" << plugin;
             }
         }
     }
 
+    //Set model
+    m_model = new ImagePreviewModel(QSize(320,320));
+    ui->listView->setModel(m_model);
+
+    connect(ui->listView->selectionModel(),SIGNAL(selectionChanged(QItemSelection,QItemSelection)),this,SLOT(selectionChanged()));
+
+    //Set delegate
+    m_delegate = new ImagePreviewDelegate;
+    ui->listView->setItemDelegate(m_delegate);
+
+    //Drop images
     this->setAcceptDrops( true );
+
+    //Context menu
+    connect(ui->listView,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(displayLabelMenu(QPoint)));
 
     nbColumns_ = this->width() / 350;
 
@@ -66,6 +87,14 @@ Resizer::Resizer(QWidget *parent) :
     validator->setRange(0,32768);
     ui->horizontalLineEdit->setValidator(validator);
     ui->verticalLineEdit->setValidator(validator);
+
+    //ToolButtons
+    connect(ui->autoRotationToolButton,SIGNAL(clicked()),this,SLOT(detectRotation()));
+    connect(ui->resetRotationToolButton,SIGNAL(clicked()),this,SLOT(resetRotation()));
+    connect(ui->leftRotationToolButton,SIGNAL(clicked()),this,SLOT(rotateLeft()));
+    connect(ui->rightRotationToolButton,SIGNAL(clicked()),this,SLOT(rotateRight()));
+    connect(ui->removeToolButton,SIGNAL(clicked()),this,SLOT(removeImage()));
+    connect(ui->deleteToolButton,SIGNAL(clicked()),this,SLOT(deleteImage()));
 
     connect(ui->buttonOpenFolder,SIGNAL(pressed()),this,SLOT(pressOpenFolder()));
     connect(ui->buttonOpenFiles,SIGNAL(pressed()),this,SLOT(pressOpenFiles()));
@@ -95,21 +124,17 @@ Resizer::Resizer(QWidget *parent) :
 
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(pressAbout()));
 
+#if 1
+    if(QFile::exists("test.jpg")){
+      addFile("test.jpg");
+    }
+#endif
 }
 
 Resizer::~Resizer()
 {
     writeSettings();
     delete ui;
-}
-
-void Resizer::resizeEvent(QResizeEvent *)
-{
-    int prev = nbColumns_;
-    nbColumns_ = this->width() / 350;
-    if(prev!=nbColumns_){
-        repaintGrid();
-    }
 }
 
 void Resizer::writeSettings()
@@ -218,8 +243,6 @@ void Resizer::addList(QStringList paths)
         diag_->show();
     }
 
-    ui->scrollAreaWidgetContents->hide();
-
     QThreadPool::globalInstance()->setMaxThreadCount( ui->numberOfThreadsSpinBox->value() );
 
     for(int i=0;i<paths.size();i++){
@@ -227,6 +250,7 @@ void Resizer::addList(QStringList paths)
         QString filepath = paths[i];
         QFileInfo fi(filepath);
 
+        //Parse directory
         if(fi.isDir()){
             QDir dir(filepath);
             if(!dir.exists())
@@ -242,50 +266,36 @@ void Resizer::addList(QStringList paths)
             continue;
         }
 
-        if(mapImages.contains(fi.absoluteFilePath()))
+        //Avoid duplicates
+        if(m_model->contains(fi.absoluteFilePath()))
             continue;
 
-
+        //Check image format
         QImageReader reader(fi.absoluteFilePath());
         if(!QImageWriter::supportedImageFormats().contains(reader.format())){
             continue;
         }
 
+        //Update number of images
         diag_->setMaximum( diag_->maximum() +1 );
 
-        MyLabel *label = new MyLabel(fi.absoluteFilePath());
-        label->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
-        label->setContextMenuPolicy(Qt::CustomContextMenu);
-        connect(label,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(displayLabelMenu(QPoint)));
-        connect(label,SIGNAL(autoPressed(QString)),this,SLOT(detectRotation(QString)));
-        connect(label,SIGNAL(resetPressed(QString)),this,SLOT(resetRotation(QString)));
-        connect(label,SIGNAL(leftPressed(QString)),this,SLOT(rotateLeft(QString)));
-        connect(label,SIGNAL(rightPressed(QString)),this,SLOT(rotateRight(QString)));
-        connect(label,SIGNAL(removePressed(QString)),this,SLOT(removeImage(QString)));
-        connect(label,SIGNAL(deletePressed(QString)),this,SLOT(deleteImage(QString)));
-        int k = mapImages.size();
-        ui->gridLayout->addWidget(label,k/nbColumns_,k%nbColumns_,Qt::AlignHCenter);
+        //Add to list
+        int id = m_idCount++;
+        m_model->addImage(id,fi.absoluteFilePath());
 
-        ImageInfo *imageinfo = new ImageInfo;
-        imageinfo->fileinfo = fi;
-        imageinfo->label = label;
-
-        mapImages.insert(fi.absoluteFilePath(),imageinfo);
-
-
+        //Create loader
         Loader * loader = new Loader;
+        loader->setImageID(id);
         loader->setFileInfo(fi);
         loader->setNeedRotation(ui->autoDetectRotationCheckBox->isChecked());
 
-        connect(loader,SIGNAL(imageLoaded(QString,ImageData)),this,SLOT(imageLoaded(QString,ImageData)),Qt::QueuedConnection);
+        connect(loader,SIGNAL(imageLoaded(int,ImageData)),this,SLOT(imageLoaded(int,ImageData)),Qt::QueuedConnection);
 
         QThreadPool::globalInstance()->start(loader);
-
     }
 
     if(diag_->maximum()==0){
         diag_->close();
-        ui->scrollAreaWidgetContents->show();
     }
 }
 
@@ -294,41 +304,16 @@ void Resizer::addFile(QString filepath)
     addList(QStringList() << filepath);
 }
 
-void Resizer::removeFile(QString filepath)
-{
-    QFileInfo fi(filepath);
-
-    mapImages.remove(fi.absoluteFilePath());
-
-    repaintGrid();
-}
-
-void Resizer::imageLoaded(QString absoluteFilePath, ImageData imgData)
+void Resizer::imageLoaded(int id, ImageData imgData)
 {
     if(imgData.image.isNull()){
-        qDebug() << "Failed to load:" << absoluteFilePath;
+        qDebug() << "Failed to load:" << id;
+        return;
     }
 
-    QImage img;
-    if(imgData.rotation==NO_ROTATION){
-        img = imgData.image;
-    }else{
-        QTransform transform;
-        switch(imgData.rotation){
-        case CLOCKWISE: transform.rotate(90); break;
-        case REVERSE: transform.rotate(180); break;
-        case COUNTERCLOCKWISE: transform.rotate(270); break;
-        default: break;
-        }
-        img = imgData.image.transformed(transform);
-    }
+    m_model->setImage(id,imgData.image,imgData.rotation);
 
-    mapImages[absoluteFilePath]->rotation = imgData.rotation;
-
-    QLabel *label = mapImages[absoluteFilePath]->label;
-    label->setPixmap(QPixmap::fromImage(img));
-
-    emit this->updateNumber( mapImages.count() );
+    emit this->updateNumber( m_model->rowCount() );
 
     if(diag_->value()<0)
         diag_->setValue(1);
@@ -340,15 +325,11 @@ void Resizer::imageLoaded(QString absoluteFilePath, ImageData imgData)
     if(diag_->value()<0){
         diag_->close();
         diag_->setMaximum(0);
-        ui->scrollAreaWidgetContents->show();
-        ui->scrollAreaWidgetContents->layout()->update();
     }
 }
 
-void Resizer::resizeFinished(QString absoluteFilePath)
+void Resizer::resizeFinished(int id)
 {
-    mapImages.remove(absoluteFilePath);
-
     if(diag_->value()<0)
         diag_->setValue(1);
     else
@@ -365,99 +346,75 @@ void Resizer::resizeFinished(QString absoluteFilePath)
     }
 }
 
+void Resizer::selectionChanged()
+{
+    setToolButtonsEnabled(ui->listView->selectionModel()->selectedIndexes().size()>0);
+}
+
 void Resizer::displayLabelMenu(QPoint pt)
 {
-    //QString absoluteFilePath = qobject_cast<MyLabel*>(sender())->getAbsoluteFilePath();
-
-    QStringList absoluteFilePathList;
-    foreach(ImageInfo* info, mapImages){
-        if(info->label->isChecked()){
-            absoluteFilePathList << info->fileinfo.absoluteFilePath();
-        }
-    }
+    if(ui->listView->selectionModel()->selectedIndexes().size()<=0)
+        return;
 
     QMenu *menu = new QMenu(this);
-    QAction *actionAuto = menu->addAction(QIcon(":images/auto"),tr("Detect rotation"),this,SLOT(detectRotation()));
-    QAction *actionReset = menu->addAction(QIcon(":images/reset"),tr("Reset rotation"),this,SLOT(resetRotation()));
-    QAction *actionLeft = menu->addAction(QIcon(":images/left"),tr("Rotate to left"),this,SLOT(rotateLeft()));
-    QAction *actionRigth = menu->addAction(QIcon(":images/right"),tr("Rotate to right"),this,SLOT(rotateRight()));
+    /*QAction *actionAuto =*/ menu->addAction(QIcon(":images/auto"),tr("Detect rotation"),this,SLOT(detectRotation()));
+    /*QAction *actionReset =*/ menu->addAction(QIcon(":images/reset"),tr("Reset rotation"),this,SLOT(resetRotation()));
+    /*QAction *actionLeft =*/ menu->addAction(QIcon(":images/left"),tr("Rotate to left"),this,SLOT(rotateLeft()));
+    /*QAction *actionRigth =*/ menu->addAction(QIcon(":images/right"),tr("Rotate to right"),this,SLOT(rotateRight()));
     menu->addSeparator();
-    QAction *actionRemove = menu->addAction(QIcon(":images/remove"),tr("Remove from grid"),this,SLOT(removeImage()));
-    QAction *actionDelete = menu->addAction(QIcon(":images/delete"),tr("Delete file"),this,SLOT(deleteImage()));
-
-
-    actionAuto->setData(absoluteFilePathList);
-    actionReset->setData(absoluteFilePathList);
-    actionLeft->setData(absoluteFilePathList);
-    actionRigth->setData(absoluteFilePathList);
-    actionRemove->setData(absoluteFilePathList);
-    actionDelete->setData(absoluteFilePathList);
+    /*QAction *actionRemove =*/ menu->addAction(QIcon(":images/remove"),tr("Remove from grid"),this,SLOT(removeImage()));
+    /*QAction *actionDelete =*/ menu->addAction(QIcon(":images/delete"),tr("Delete file"),this,SLOT(deleteImage()));
 
     menu->move( qobject_cast<QWidget*>(sender())->mapToGlobal(pt) );
-    if(menu->exec()){
-        foreach(ImageInfo* info, mapImages){
-            if(info->label->isChecked()){
-                info->label->setUnChecked();
-            }
-        }
+
+    QAction *selectedAction = menu->exec();
+
+    if(selectedAction){
+        qDebug() << selectedAction->text();
     }
+}
+
+QList<int> Resizer::selectedIDs()
+{
+    QModelIndexList list = ui->listView->selectionModel()->selectedIndexes();
+
+    QList<int> ids;
+    foreach(QModelIndex index, list){
+        ids << index.data(Qt::UserRole).toInt();
+    }
+
+    return ids;
 }
 
 void Resizer::removeImage()
 {
-    QAction *action = qobject_cast<QAction*>(sender());
-    if(action){
-        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
-        removeImage(absoluteFilePathList);
-    }
+    removeImage(selectedIDs());
 }
 
-void Resizer::removeImage(QString absoluteFilePath)
+void Resizer::removeImage(QList<int> ids)
 {
-    removeImage(QStringList() << absoluteFilePath);
-}
-
-void Resizer::removeImage(QStringList absoluteFilePathList)
-{
-    foreach(QString absoluteFilePath, absoluteFilePathList){
-        int index = ui->gridLayout->indexOf(mapImages[absoluteFilePath]->label);
-
-        int row,col,rowSpan,colSpan;
-        ui->gridLayout->getItemPosition(index,&row,&col,&rowSpan,&colSpan);
-
-        for(int k = row*nbColumns_+col+1; k<ui->gridLayout->count();k++){
-            int prev = k-1;
-            ui->gridLayout->addWidget(ui->gridLayout->itemAtPosition(k/nbColumns_,k%nbColumns_)->widget(),prev/nbColumns_,prev%nbColumns_);
-        }
-
-
-        mapImages[absoluteFilePath]->label->close();
-        ui->gridLayout->removeWidget(mapImages[absoluteFilePath]->label);
-
-        mapImages.remove(absoluteFilePath);
-        emit this->updateNumber( mapImages.count() );
+    foreach(int id, ids){
+        m_model->removeImage(id);
     }
 
+    //Update number of images
+    emit this->updateNumber( m_model->rowCount() );
 }
 
 void Resizer::deleteImage()
 {
-    QAction *action = qobject_cast<QAction*>(sender());
-    if(action){
-        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
-        deleteImage(absoluteFilePathList);
-    }
+    deleteImage(selectedIDs());
 }
 
-void Resizer::deleteImage(QString absoluteFilePath)
+void Resizer::deleteImage(QList<int> ids)
 {
-    deleteImage(QStringList() << absoluteFilePath);
-}
-
-void Resizer::deleteImage(QStringList absoluteFilePathList)
-{
-    if(absoluteFilePathList.isEmpty())
+    if(ids.isEmpty())
         return;
+
+    QStringList absoluteFilePathList;
+    foreach(int id, ids){
+        absoluteFilePathList << m_model->data(id,Qt::UserRole+1).toString();
+    }
 
     QMessageBox *mess = new QMessageBox(this);
     mess->setIcon(QMessageBox::Warning);
@@ -485,176 +442,81 @@ void Resizer::deleteImage(QStringList absoluteFilePathList)
             if(mess->clickedButton() == deleteButton){
                 QFile::remove(absoluteFilePath);
             }
-            removeImage(absoluteFilePath);
+            removeImage(QList<int>() << ids.at(absoluteFilePathList.indexOf(absoluteFilePath)) );
         }
     }
 }
 
 void Resizer::detectRotation()
 {
-    QAction *action = qobject_cast<QAction*>(sender());
-    if(action){
-        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
-        detectRotation(absoluteFilePathList);
-    }
+    detectRotation(selectedIDs());
 }
 
-void Resizer::detectRotation(QString absoluteFilePath)
+
+void Resizer::detectRotation(QList<int> ids)
 {
-    detectRotation(QStringList() << absoluteFilePath);
-}
+    foreach(int id, ids){
+        QString filepath = m_model->getImageFilepath(id);
+        if(!filepath.isEmpty()){
+            int orientation = QExifImageHeader(filepath).value(QExifImageHeader::Orientation).toShort();
 
-void Resizer::detectRotation(QStringList absoluteFilePathList)
-{
-    foreach(QString absoluteFilePath, absoluteFilePathList){
-        int orientation = QExifImageHeader(absoluteFilePath).value(QExifImageHeader::Orientation).toShort();
+            RotationState rotation;
+            switch(orientation){
+            case 6: rotation = CLOCKWISE; break;
+            case 3: rotation = REVERSE; break;
+            case 8: rotation = COUNTERCLOCKWISE; break;
+            default: rotation = NO_ROTATION;
+            }
 
-        RotationState rotation;
-        switch(orientation){
-        case 6: rotation = CLOCKWISE; break;
-        case 3: rotation = REVERSE; break;
-        case 8: rotation = COUNTERCLOCKWISE; break;
-        default: rotation = NO_ROTATION;
+            m_model->setRotation(id,rotation);
         }
-
-        if(rotation==mapImages[absoluteFilePath]->rotation)
-            continue;
-
-        QTransform transform;
-        switch(mapImages[absoluteFilePath]->rotation){
-        case CLOCKWISE: transform.rotate(-90); break;
-        case REVERSE: transform.rotate(-180); break;
-        case COUNTERCLOCKWISE: transform.rotate(-270); break;
-        default: break;
-        }
-        switch(rotation){
-        case CLOCKWISE: transform.rotate(90); break;
-        case REVERSE: transform.rotate(180); break;
-        case COUNTERCLOCKWISE: transform.rotate(270); break;
-        default: break;
-        }
-
-        QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
-        pix = pix.transformed(transform);
-        mapImages[absoluteFilePath]->rotation = rotation;
-
-        mapImages[absoluteFilePath]->label->setPixmap(pix);
     }
 }
 
 void Resizer::resetRotation()
 {
-    QAction *action = qobject_cast<QAction*>(sender());
-    if(action){
-        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
-        resetRotation(absoluteFilePathList);
-    }
+    resetRotation(selectedIDs());
 }
 
-void Resizer::resetRotation(QString absoluteFilePath)
+void Resizer::resetRotation(QList<int> ids)
 {
-    resetRotation(QStringList() << absoluteFilePath);
-}
-
-void Resizer::resetRotation(QStringList absoluteFilePathList)
-{
-    foreach(QString absoluteFilePath, absoluteFilePathList){
-        if(mapImages[absoluteFilePath]->rotation==NO_ROTATION)
-            continue;
-
-        QTransform transform;
-        switch(mapImages[absoluteFilePath]->rotation){
-        case CLOCKWISE: transform.rotate(-90); break;
-        case REVERSE: transform.rotate(-180); break;
-        case COUNTERCLOCKWISE: transform.rotate(-270); break;
-        default: break;
-        }
-
-        QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
-        pix = pix.transformed(transform);
-
-        mapImages[absoluteFilePath]->label->setPixmap(pix);
-        mapImages[absoluteFilePath]->rotation = NO_ROTATION;
+    foreach(int id, ids){
+        m_model->setRotation(id,NO_ROTATION);
     }
 }
 
 void Resizer::rotateLeft()
 {
-    QAction *action = qobject_cast<QAction*>(sender());
-    if(action){
-        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
-        rotateLeft(absoluteFilePathList);
-    }
+    rotateLeft(selectedIDs());
 }
 
-void Resizer::rotateLeft(QString absoluteFilePath)
+void Resizer::rotateLeft(QList<int> ids)
 {
-    rotateLeft(QStringList() << absoluteFilePath);
-}
-
-void Resizer::rotateLeft(QStringList absoluteFilePathList)
-{
-    foreach(QString absoluteFilePath, absoluteFilePathList){
-        QTransform transform;
-        transform.rotate(-90);
-
-        QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
-        pix = pix.transformed(transform);
-
-        mapImages[absoluteFilePath]->label->setPixmap(pix);
-
-        RotationState rotation;
-        if(mapImages[absoluteFilePath]->rotation==NO_ROTATION){
-            rotation = COUNTERCLOCKWISE;
-        }else{
-            rotation = static_cast<RotationState>(mapImages[absoluteFilePath]->rotation-1);
-        }
-
-        mapImages[absoluteFilePath]->rotation = rotation;
+    foreach(int id, ids){
+        m_model->rotate(id,ROTATION_LEFT);
     }
 }
 
 void Resizer::rotateRight()
 {
-    QAction *action = qobject_cast<QAction*>(sender());
-    if(action){
-        QStringList absoluteFilePathList = qobject_cast<QAction*>(sender())->data().toStringList();
-        rotateRight(absoluteFilePathList);
+    rotateRight(selectedIDs());
+}
+
+void Resizer::rotateRight(QList<int> ids)
+{
+    foreach(int id, ids){
+        m_model->rotate(id,ROTATION_RIGHT);
     }
 }
 
-void Resizer::rotateRight(QString absoluteFilePath)
+void Resizer::setToolButtonsEnabled(bool enabled)
 {
-    rotateRight(QStringList() << absoluteFilePath);
-}
-
-void Resizer::rotateRight(QStringList absoluteFilePathList)
-{
-    foreach(QString absoluteFilePath, absoluteFilePathList){
-        QTransform transform;
-        transform.rotate(90);
-
-        QPixmap pix = mapImages[absoluteFilePath]->label->pixmap()->copy();
-        pix = pix.transformed(transform);
-
-        mapImages[absoluteFilePath]->label->setPixmap(pix);
-
-        RotationState rotation = static_cast<RotationState>((mapImages[absoluteFilePath]->rotation+1)%4);
-
-        mapImages[absoluteFilePath]->rotation = rotation;
-    }
-}
-
-void Resizer::repaintGrid()
-{
-    QList<QLayoutItem*> list;
-    for(int k=0;k<ui->gridLayout->count();k++){
-        list << ui->gridLayout->itemAt(k);
-    }
-
-    for(int k=0;k<list.size();k++){
-        ui->gridLayout->addWidget(list.at(k)->widget(),k/nbColumns_,k%nbColumns_,Qt::AlignHCenter);
-    }
+    ui->autoRotationToolButton->setEnabled(enabled);
+    ui->resetRotationToolButton->setEnabled(enabled);
+    ui->leftRotationToolButton->setEnabled(enabled);
+    ui->rightRotationToolButton->setEnabled(enabled);
+    ui->removeToolButton->setEnabled(enabled);
+    ui->deleteToolButton->setEnabled(enabled);
 }
 
 void Resizer::openLogo()
@@ -687,20 +549,23 @@ void Resizer::resizeAll()
         return;
     }
 
-    if(!mapImages.isEmpty()){
-        diag_->setLabelText(tr("Resizing..."));
-        diag_->show();
+    if(m_model->rowCount()<=0){
+        return;
     }
+
+    diag_->setLabelText(tr("Resizing..."));
+    diag_->show();
+    diag_->setMaximum( m_model->rowCount() );
 
     QThreadPool::globalInstance()->setMaxThreadCount( ui->numberOfThreadsSpinBox->value() );
 
-    foreach(ImageInfo *img, mapImages){
-        diag_->setMaximum( diag_->maximum() +1 );
+    QList<ImageInfo> images = m_model->getImageList();
+    foreach(ImageInfo image, images){
 
         Saver *saver = new Saver;
-        saver->setFileInfo(img->fileinfo);
+        saver->setFileInfo(image.fileinfo);
+        saver->setRotation(image.rotation);
         saver->setNoResize(ui->noResizeCheckBox->isChecked());
-        saver->setRotation(img->rotation);
         saver->setOutputSubfolder(ui->outputSubfolderLineEdit->text());
 
         saver->setUseRatio(ui->groupRatio->isChecked());
@@ -720,7 +585,7 @@ void Resizer::resizeAll()
             saver->setLogoPosition(ui->selector->position(),posX,posY);
         }
 
-        connect(saver,SIGNAL(resizeFinished(QString)),this,SLOT(resizeFinished(QString)),Qt::QueuedConnection);
+        connect(saver,SIGNAL(resizeFinished(int)),this,SLOT(resizeFinished(int)),Qt::QueuedConnection);
 
         QThreadPool::globalInstance()->start(saver);
     }

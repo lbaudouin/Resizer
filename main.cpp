@@ -1,4 +1,4 @@
-#define CURRENT_VERSION "0.1.9"
+#define CURRENT_VERSION "0.2.0"
 
 #include <QtGui/QApplication>
 #include <QTranslator>
@@ -67,10 +67,10 @@ int main(int argc, char *argv[])
     UpdateManager *up = new UpdateManager;
     QObject::connect(up,SIGNAL(restart(QString)),&w,SLOT(restart(QString)));
     up->setVersion(CURRENT_VERSION);
-    up->setMessageUrl("http://lbaudouin.chez.com/RESIZER_MESSAGE");
-    up->setVersionUrl("http://lbaudouin.chez.com/RESIZER_VERSION");
-    up->setExecUrl("http://lbaudouin.chez.com/Resizer-update.exe");
-    //up->setZipUrl("http://lbaudouin.chez.com/Resizer-update.zip");
+    up->setMessageUrl("http://lbaudouin.fr/RESIZER_MESSAGE");
+    up->setVersionUrl("http://lbaudouin.fr/RESIZER_VERSION");
+    up->setExecUrl("http://lbaudouin.fr/Resizer-update.exe");
+    //up->setZipUrl("http://lbaudouin.fr/Resizer-update.zip");
     up->getMessage();
     up->setDiscret(true);
     up->startUpdate();

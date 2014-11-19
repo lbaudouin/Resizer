@@ -154,7 +154,7 @@ void Saver::run()
     //exif.setValue(QExifImageHeader::ImageWidth,small.width());
     //exif.setValue(QExifImageHeader::ImageLength,small.height());
 
-    emit this->resizeFinished(info_.absoluteFilePath());
+    emit this->resizeFinished(m_id);
 
 
 }

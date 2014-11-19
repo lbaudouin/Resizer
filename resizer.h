@@ -22,6 +22,9 @@
 
 #include <QSettings>
 
+#include "imagepreview/ImagePreviewModel.h"
+#include "imagepreview/ImagePreviewDelegate.h"
+
 #include "qexifimageheader/qexifimageheader.h"
 
 #include "positionselector.h"
@@ -41,12 +44,6 @@ namespace Ui {
 class Resizer;
 }
 
-struct ImageInfo{
-    QFileInfo fileinfo;
-    MyLabel *label;
-    RotationState rotation;
-};
-
 class Resizer : public QMainWindow
 {
     Q_OBJECT
@@ -60,15 +57,15 @@ public:
 private:
     Ui::Resizer *ui;
 
-    QMap<QString,ImageInfo*> mapImages;
-
     QProgressDialog *diag_;
-
     QString logoPath;
-
     QString version_;
-
     int nbColumns_;
+
+    ImagePreviewModel *m_model;
+    ImagePreviewDelegate *m_delegate;
+
+    int m_idCount;
 
 protected:
     void dropEvent(QDropEvent *event);
@@ -76,17 +73,15 @@ protected:
     void dragMoveEvent( QDragMoveEvent *event );
     void dragLeaveEvent( QDragLeaveEvent *event );
 
-    void resizeEvent(QResizeEvent *);
-
     void addFile(QString);
-    void removeFile(QString);
-
-    void repaintGrid();
 
     void readSettings();
     void writeSettings();
 
     void setLogo(QString path);
+
+    void setToolButtonsEnabled(bool enabled);
+    QList<int> selectedIDs();
 
 
 public slots:
@@ -110,8 +105,8 @@ public slots:
 
     void displayLabelMenu(QPoint);
 
-    void imageLoaded(QString absoluteFilePath, ImageData imageData);
-    void resizeFinished(QString absoluteFilePath);
+    void imageLoaded(int id, ImageData imageData);
+    void resizeFinished(int id);
 
     void removeImage();
     void deleteImage();
@@ -120,19 +115,14 @@ public slots:
     void rotateLeft();
     void rotateRight();
 
-    void removeImage(QString);
-    void deleteImage(QString);
-    void detectRotation(QString);
-    void resetRotation(QString);
-    void rotateLeft(QString);
-    void rotateRight(QString);
+    void removeImage(QList<int>);
+    void deleteImage(QList<int>);
+    void detectRotation(QList<int>);
+    void resetRotation(QList<int>);
+    void rotateLeft(QList<int>);
+    void rotateRight(QList<int>);
 
-    void removeImage(QStringList);
-    void deleteImage(QStringList);
-    void detectRotation(QStringList);
-    void resetRotation(QStringList);
-    void rotateLeft(QStringList);
-    void rotateRight(QStringList);
+    void selectionChanged();
 
 signals:
     void needToShow();

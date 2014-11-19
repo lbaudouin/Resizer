@@ -39,6 +39,7 @@ public:
     void setLogoPosition(PositionSelector::POSITION position, int xShift, int yShift);
 
 private:
+    int m_id;
     QFileInfo info_;
     QString subfolder_;
     RotationState rotation_;
@@ -54,7 +55,7 @@ private:
     PositionSelector::POSITION position_;
     
 signals:
-    void resizeFinished(QString absoluteFilePath);
+    void resizeFinished(int id);
 
 public slots:
     

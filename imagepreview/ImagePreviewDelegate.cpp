@@ -73,6 +73,7 @@ QSize ImagePreviewDelegate::sizeHint(const QStyleOptionViewItem& /*option*/, con
     QSize previewSize = model->previewSize(row);
     previewSize.rheight() += 2 * borderSize();
     previewSize.rwidth() += 2 * borderSize();
+
     return previewSize;
 }
 

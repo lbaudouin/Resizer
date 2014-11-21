@@ -197,6 +197,7 @@ void Resizer::pressOpenFolder()
 
     QCoreApplication::processEvents();
 
+    diag_->setMaximum(0);
     addFile(path);
     //emit this->addFiles(QStringList() << path);
 }
@@ -223,6 +224,7 @@ void Resizer::pressOpenFiles()
     QCoreApplication::processEvents();
 
     //emit this->addFiles(absoluteFilepaths);
+    diag_->setMaximum(0);
     addList(absoluteFilepaths);
 }
 
@@ -281,15 +283,11 @@ void Resizer::addList(QStringList paths)
         int k = mapImages.size();
         ui->gridLayout->addWidget(label,k/nbColumns_,k%nbColumns_,Qt::AlignHCenter);
 
-        /*ImageInfo *imageinfo = new ImageInfo;
-        imageinfo->fileinfo = fi;
-        imageinfo->label = label;*/
-
         //Add to list
         mapImages.insert(fi.absoluteFilePath(),label);
 
         //Update number of images
-        diag_->setMaximum( mapImages.size() );
+        diag_->setMaximum( diag_->maximum() + 1 );
 
         //Create loader
         Loader * loader = new Loader;

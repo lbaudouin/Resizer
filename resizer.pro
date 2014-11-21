@@ -17,7 +17,7 @@ SOURCES += main.cpp\
     positionselector.cpp \
     loader.cpp \
     saver.cpp \
-    mylabel.cpp
+    imagelabel.cpp
 
 HEADERS  += \
     qexifimageheader/qexifimageheader.h \
@@ -25,9 +25,9 @@ HEADERS  += \
     positionselector.h \
     loader.h \
     saver.h \
-    mylabel.h \
     plugininterface.h \
-    rotationstate.h
+    rotationstate.h \
+    imagelabel.h
 
 FORMS    += \
     resizer.ui

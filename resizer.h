@@ -19,6 +19,7 @@
 #include <QDropEvent>
 #include <QScrollBar>
 #include <QUrl>
+#include <QMovie>
 
 #include <QSettings>
 
@@ -30,7 +31,7 @@
 #include "loader.h"
 #include "saver.h"
 
-#include "mylabel.h"
+#include "imagelabel.h"
 
 #include "plugininterface.h"
 #include <QPluginLoader>
@@ -41,11 +42,11 @@ namespace Ui {
 class Resizer;
 }
 
-struct ImageInfo{
+/*struct ImageInfo{
     QFileInfo fileinfo;
     MyLabel *label;
     RotationState rotation;
-};
+};*/
 
 class Resizer : public QMainWindow
 {
@@ -60,15 +61,13 @@ public:
 private:
     Ui::Resizer *ui;
 
-    QMap<QString,ImageInfo*> mapImages;
-
+    QMap<QString,ImageLabel*> mapImages;
     QProgressDialog *diag_;
-
     QString logoPath;
-
     QString version_;
-
     int nbColumns_;
+
+    QMovie m_loadingMovie;
 
 protected:
     void dropEvent(QDropEvent *event);
@@ -88,6 +87,9 @@ protected:
 
     void setLogo(QString path);
 
+    void setToolButtonsEnabled(bool enabled);
+
+    QStringList selected();
 
 public slots:
     void pressOpenFolder();
@@ -122,10 +124,6 @@ public slots:
 
     void removeImage(QString);
     void deleteImage(QString);
-    void detectRotation(QString);
-    void resetRotation(QString);
-    void rotateLeft(QString);
-    void rotateRight(QString);
 
     void removeImage(QStringList);
     void deleteImage(QStringList);
@@ -133,6 +131,10 @@ public slots:
     void resetRotation(QStringList);
     void rotateLeft(QStringList);
     void rotateRight(QStringList);
+
+    void selectAll();
+    void deselectAll();
+    void selectionChanged();
 
 signals:
     void needToShow();

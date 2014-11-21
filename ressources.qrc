@@ -14,6 +14,9 @@
         <file alias="auto">images/auto.png</file>
         <file alias="check">images/check.png</file>
         <file alias="reset">images/reset.png</file>
+        <file alias="loading">images/loading.gif</file>
+        <file alias="deselect_all">images/deselect_all.png</file>
+        <file alias="select_all">images/select_all.png</file>
     </qresource>
     <qresource prefix="/lang">
         <file alias="lang_fr">resizer_fr.qm</file>

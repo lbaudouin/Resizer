@@ -51,6 +51,11 @@ void Saver::setRatio(double ratio)
     ratio_ = ratio;
 }
 
+void Saver::setKeepExif(bool keepExif)
+{
+    keepExif_ = keepExif;
+}
+
 void Saver::setLogoPosition(PositionSelector::POSITION position, int xShift, int yShift)
 {
     position_ = position;
@@ -60,23 +65,6 @@ void Saver::setLogoPosition(PositionSelector::POSITION position, int xShift, int
 
 void Saver::run()
 {
-
-    /*QExifImageHeader exif(img.fileinfo.absoluteFilePath());
-
-    QList<QExifImageHeader::ImageTag> list1 = exif.imageTags();
-    QList<QExifImageHeader::ExifExtendedTag> list2 = exif.extendedTags();
-    QList<QExifImageHeader::GpsTag> list3 = exif.gpsTags();
-
-    for(int i=0;i<list1.size();i++){
-        qDebug() << exif.value(list1[i]).toString();
-    }
-    for(int i=0;i<list2.size();i++){
-        qDebug() << exif.value(list2[i]).toString();
-    }
-    for(int i=0;i<list3.size();i++){
-        qDebug() << exif.value(list3[i]).toString();
-    }*/
-
     QString output = info_.absoluteDir().absolutePath() + QDir::separator() + subfolder_ + QDir::separator() + info_.fileName();
 
     QDir dir(info_.absoluteDir());
@@ -149,10 +137,34 @@ void Saver::run()
     }
 
     small.save(output);
+    small.save(info_.absoluteDir().absolutePath() + QDir::separator() + subfolder_ + QDir::separator() + "test.jpg");
 
-    //exif.setValue(QExifImageHeader::Orientation,0);
-    //exif.setValue(QExifImageHeader::ImageWidth,small.width());
-    //exif.setValue(QExifImageHeader::ImageLength,small.height());
+    if(keepExif_){
+        QExifImageHeader exif(info_.absoluteFilePath());
+        QList<QExifImageHeader::ImageTag> list1 = exif.imageTags();
+        QList<QExifImageHeader::ExifExtendedTag> list2 = exif.extendedTags();
+        QList<QExifImageHeader::GpsTag> list3 = exif.gpsTags();
+
+        for(int i=0;i<list1.size();i++){
+            qDebug() << exif.value(list1[i]).toString();
+        }
+        for(int i=0;i<list2.size();i++){
+            qDebug() << exif.value(list2[i]).toString();
+        }
+        for(int i=0;i<list3.size();i++){
+            qDebug() << exif.value(list3[i]).toString();
+        }
+
+        //exif.setValue(QExifImageHeader::Orientation,0);
+        exif.setValue(QExifImageHeader::ImageWidth,small.width());
+        exif.setValue(QExifImageHeader::ImageLength,small.height());
+        exif.setValue(QExifImageHeader::PixelXDimension,small.width());
+        exif.setValue(QExifImageHeader::PixelYDimension,small.height());
+        exif.setThumbnail(QImage());
+
+        //exif.saveToJpeg(output);
+        exif.saveToJpeg(info_.absoluteDir().absolutePath() + QDir::separator() + subfolder_ + QDir::separator() + "test.jpg");
+    }
 
     emit this->resizeFinished(info_.absoluteFilePath());
 

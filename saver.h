@@ -31,6 +31,7 @@ public:
     void setNoResize(bool noResize);
     void setUseRatio(bool useRatio);
     void setAddLogo(bool addLogo);
+    void setKeepExif(bool keepExif);
 
     void setSizeMax(int sizeMax);
     void setRatio(double ratio);
@@ -45,6 +46,7 @@ private:
     bool noResize_;
     bool useRatio_;
     bool addLogo_;
+    bool keepExif_;
 
     int sizeMax_;
     double ratio_;

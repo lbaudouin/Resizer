@@ -611,6 +611,7 @@ void Resizer::resizeAll()
         saver->setNoResize(ui->noResizeCheckBox->isChecked());
         saver->setRotation(label->rotation());
         saver->setOutputSubfolder(ui->outputSubfolderLineEdit->text());
+        saver->setKeepExif(ui->keepExifInfoCheckBox->isChecked());
 
         saver->setUseRatio(ui->groupRatio->isChecked());
         saver->setRatio( ui->comboRatio->currentText().toDouble() / 100.0 );

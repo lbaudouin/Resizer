@@ -379,7 +379,7 @@ void Resizer::updateStatus()
         }
     }
 
-    if(nbSelected==0)
+    if(mapImages.count()==0)
         ui->status->setText("");
     else if(nbSelected>0)
         ui->status->setText(tr("%n images","",mapImages.size()) + " (" + tr("%n selected","",nbSelected) + ")");

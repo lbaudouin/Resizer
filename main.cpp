@@ -1,4 +1,4 @@
-#define CURRENT_VERSION "0.2.1"
+#define CURRENT_VERSION "0.2.2"
 
 #include <QtGui/QApplication>
 #include <QTranslator>

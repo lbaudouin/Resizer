@@ -106,10 +106,20 @@ Resizer::Resizer(QWidget *parent) :
 
     readSettings();
 
-    setLogo(logoPath);
+    setLogo(m_logoPath);
 
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(pressAbout()));
 
+
+    imageSaver = new QFutureWatcher<bool>(this);
+
+    m_resizeProgressDialog = new QProgressDialog(tr("Resizing..."),tr("Cancel"),0,0,this);
+    m_resizeProgressDialog->setWindowTitle(tr("Please wait"));
+
+    connect(imageSaver,SIGNAL(progressRangeChanged(int,int)),m_resizeProgressDialog,SLOT(setRange(int,int)));
+    connect(imageSaver,SIGNAL(progressValueChanged(int)),m_resizeProgressDialog,SLOT(setValue(int)));
+    connect(m_resizeProgressDialog,SIGNAL(canceled()),imageSaver,SLOT(cancel()));
+    connect(imageSaver,SIGNAL(finished()),this,SLOT(resizeFinished()));
 }
 
 Resizer::~Resizer()
@@ -137,6 +147,7 @@ void Resizer::writeSettings()
     settings.setValue("options/rotate",ui->autoDetectRotationCheckBox->isChecked());
     settings.setValue("options/auto_add_logo",ui->addLogoAutomaticalyCheckBox->isChecked());
     settings.setValue("options/nb_thread",ui->numberOfThreadsSpinBox->value());
+    settings.setValue("options/close_after_resizing",ui->closeAfterResizingCheckBox->isChecked());
 
     settings.setValue("small/mode",ui->groupRatio->isChecked()?"ratio":"size");
     settings.setValue("small/ratio",ui->comboRatio->currentText());
@@ -145,7 +156,7 @@ void Resizer::writeSettings()
     settings.setValue("logo/attach",ui->selector->position());
     settings.setValue("logo/shift-x",ui->horizontalLineEdit->text().toInt());
     settings.setValue("logo/shift-y",ui->verticalLineEdit->text().toInt());
-    settings.setValue("logo/path",logoPath);
+    settings.setValue("logo/path",m_logoPath);
 }
 
 void Resizer::readSettings()
@@ -163,6 +174,7 @@ void Resizer::readSettings()
     ui->numberOfThreadsSpinBox->setValue( settings.value("options/nb_thread",QThread::idealThreadCount()).toInt() );
     QThreadPool::globalInstance()->setMaxThreadCount( settings.value("options/nb_thread",QThread::idealThreadCount()).toInt() );
 
+    ui->closeAfterResizingCheckBox->setChecked( settings.value("options/close_after_resizing",true).toBool() );
 
     setSizeMode( settings.value("small/mode","size")=="size"?true:false );
     ui->comboRatio->setCurrentIndex(ui->comboRatio->findText(settings.value("small/ratio",33).toString()));
@@ -175,7 +187,7 @@ void Resizer::readSettings()
     ui->selector->setPosition( static_cast<PositionSelector::POSITION>(settings.value("logo/attach",3).toInt()) );
     ui->horizontalLineEdit->setText( settings.value("logo/shift-x",25).toString() );
     ui->verticalLineEdit->setText( settings.value("logo/shift-y",25).toString() );
-    logoPath = settings.value("logo/path",QDesktopServices::storageLocation(QDesktopServices::PicturesLocation)  + QDir::separator() + "logo.png").toString();
+    m_logoPath = settings.value("logo/path",QDesktopServices::storageLocation(QDesktopServices::PicturesLocation)  + QDir::separator() + "logo.png").toString();
 }
 
 void Resizer::setRatioMode(bool ratioMode)
@@ -342,26 +354,6 @@ void Resizer::imageLoaded(QString absoluteFilePath, ImageData imgData)
         diag_->setMaximum(0);
         ui->scrollAreaWidgetContents->show();
         ui->scrollAreaWidgetContents->layout()->update();
-    }
-}
-
-void Resizer::resizeFinished(QString absoluteFilePath)
-{
-    mapImages.remove(absoluteFilePath);
-
-    if(diag_->value()<0)
-        diag_->setValue(1);
-    else
-        diag_->setValue( diag_->value() +1 );
-
-    emit this->updateProgressBar(diag_->minimum(),diag_->maximum(),diag_->value());
-
-    if(diag_->value()<0){
-        diag_->close();
-        diag_->setMaximum(0);
-        this->hide();
-        emit this->finished();
-        this->close();
     }
 }
 
@@ -578,13 +570,13 @@ void Resizer::openLogo()
 
 void Resizer::setLogo(QString path)
 {
-    logoPath = path;
+    m_logoPath = path;
     ui->editLogo->setText(path);
 
-    if(logoPath.isEmpty() || !QFile::exists(logoPath)){
+    if(m_logoPath.isEmpty() || !QFile::exists(m_logoPath)){
         ui->labelLogo->setText(tr("Logo"));
     }else{
-        QPixmap pix(logoPath);
+        QPixmap pix(m_logoPath);
         ui->labelLogo->setPixmap(pix.scaled(400,200,Qt::KeepAspectRatio));
     }
 }
@@ -596,44 +588,162 @@ void Resizer::resizeAll()
         return;
     }
 
-    if(!mapImages.isEmpty()){
-        diag_->setLabelText(tr("Resizing..."));
-        diag_->show();
+    if(mapImages.isEmpty())
+        return;
+
+    ImageInfo defaultInfo;
+    defaultInfo.noResize = ui->noResizeCheckBox->isChecked();
+    defaultInfo.outputFolder = ui->outputSubfolderLineEdit->text();
+    defaultInfo.keepExif = ui->keepExifInfoCheckBox->isChecked();
+
+    defaultInfo.useRatio = ui->groupRatio->isChecked();
+    defaultInfo.ratio = ui->comboRatio->currentText().toDouble() / 100.0;
+    defaultInfo.sizeMax = ui->comboPixels->currentText().toInt();
+
+    defaultInfo.addLogo = ui->groupLogo->isChecked();
+    if(defaultInfo.addLogo){
+        bool ok_X,ok_Y;
+
+        int posX = ui->horizontalLineEdit->text().toInt(&ok_X);
+        int posY = ui->verticalLineEdit->text().toInt(&ok_Y);
+
+        if(!ok_X || !ok_Y)
+            defaultInfo.addLogo = false;
+
+        QImage logo(m_logoPath);
+
+        defaultInfo.logo = logo;
+        defaultInfo.logoPosition = ui->selector->position();
+        defaultInfo.logoShifting = QPoint(posX,posY);
     }
 
-    QThreadPool::globalInstance()->setMaxThreadCount( ui->numberOfThreadsSpinBox->value() );
-
-    diag_->setMaximum( mapImages.size() );
+    QList<ImageInfo> images;
     foreach(ImageLabel *label, mapImages){
+        ImageInfo info = defaultInfo;
+        info.filename = label->getAbsoluteFilePath();
+        info.rotation = label->rotation();
+        images << info;
+    }
 
-        Saver *saver = new Saver;
-        saver->setFileInfo(QFileInfo(label->getAbsoluteFilePath()));
-        saver->setNoResize(ui->noResizeCheckBox->isChecked());
-        saver->setRotation(label->rotation());
-        saver->setOutputSubfolder(ui->outputSubfolderLineEdit->text());
-        saver->setKeepExif(ui->keepExifInfoCheckBox->isChecked());
+    QThreadPool::globalInstance()->setMaxThreadCount(ui->numberOfThreadsSpinBox->value());
 
-        saver->setUseRatio(ui->groupRatio->isChecked());
-        saver->setRatio( ui->comboRatio->currentText().toDouble() / 100.0 );
-        saver->setSizeMax( ui->comboPixels->currentText().toInt() );
+    imageSaver->setFuture(QtConcurrent::mapped(images, save));
+    m_resizeProgressDialog->show();
+}
 
-        saver->setAddLogo(ui->groupLogo->isChecked());
-        if(ui->groupLogo->isChecked()){
-            bool ok_X,ok_Y;
+void Resizer::resizeFinished()
+{
+    emit this->finished();
+    if(ui->closeAfterResizingCheckBox->isChecked() && !m_resizeProgressDialog->wasCanceled()){
+        this->close();
+    }
+}
 
-            int posX = ui->horizontalLineEdit->text().toInt(&ok_X);
-            int posY = ui->verticalLineEdit->text().toInt(&ok_Y);
+bool Resizer::save(ImageInfo info)
+{
+    QFileInfo fi(info.filename);
+    QString output = fi.absoluteDir().absolutePath() + QDir::separator() + info.outputFolder + QDir::separator() + fi.fileName();
 
-            QImage logo(logoPath);
+    QDir dir(fi.absoluteDir());
+    if(!dir.exists() || !dir.mkpath(info.outputFolder)){
+        return false;
+    }
 
-            saver->setLogo(logo);
-            saver->setLogoPosition(ui->selector->position(),posX,posY);
+    QImage small;
+    QImageReader reader(info.filename);
+    QSize imageSize = reader.size();
+
+    if(info.noResize){
+        small.load(info.filename);
+    }else{
+        if(imageSize.isValid()){
+            if(info.useRatio){
+                imageSize *= info.ratio;
+            }else{
+                imageSize.scale(info.sizeMax,info.sizeMax,Qt::KeepAspectRatio);
+            }
+            reader.setScaledSize(imageSize);
+            small = reader.read();
+        }else{
+            QImage original(info.filename);
+            imageSize = original.size();
+            if(info.useRatio){
+                imageSize *= info.ratio;
+            }else{
+                imageSize.scale(info.sizeMax,info.sizeMax,Qt::KeepAspectRatio);
+            }
+            small = original.scaled(imageSize,Qt::KeepAspectRatio);
+        }
+    }
+
+    if(info.rotation!=NO_ROTATION){
+        QTransform transform;
+        switch(info.rotation){
+        case CLOCKWISE: transform.rotate(90); break;
+        case REVERSE: transform.rotate(180); break;
+        case COUNTERCLOCKWISE: transform.rotate(270); break;
+        default: transform.reset();
+        }
+        small = small.transformed(transform);
+    }
+
+    QPoint shift;
+    if(info.addLogo && !info.logo.isNull()){
+        switch(info.logoPosition){
+        case PositionSelector::TOP_LEFT:
+            break;
+        case PositionSelector::TOP_RIGHT:
+            shift.setX( small.width() - info.logo.width() - info.logoShifting.x() );
+            break;
+        case PositionSelector::BOTTOM_LEFT:
+            shift.setY( small.height() - info.logo.height() - info.logoShifting.y() );
+            break;
+        case PositionSelector::BOTTOM_RIGHT:
+            shift.setX( small.width() - info.logo.width() - info.logoShifting.x() );
+            shift.setY( small.height() - info.logo.height() - info.logoShifting.y() );
+            break;
+        case PositionSelector::CENTER:
+            shift.setX( small.width()/2.0 - info.logo.width()/2.0 + info.logoShifting.x() );
+            shift.setY( small.height()/2.0 - info.logo.height()/2.0 + info.logoShifting.y() );
+            break;
+        default: break;
         }
 
-        connect(saver,SIGNAL(resizeFinished(QString)),this,SLOT(resizeFinished(QString)),Qt::QueuedConnection);
-
-        QThreadPool::globalInstance()->start(saver);
+        QPainter painter(&small);
+        painter.drawImage(shift,info.logo);
+        painter.end();
     }
+
+    small.save(output);
+
+    if(info.keepExif){
+        QExifImageHeader exif(info.filename);
+        QList<QExifImageHeader::ImageTag> list1 = exif.imageTags();
+        QList<QExifImageHeader::ExifExtendedTag> list2 = exif.extendedTags();
+        QList<QExifImageHeader::GpsTag> list3 = exif.gpsTags();
+
+        /*for(int i=0;i<list1.size();i++){
+            qDebug() << exif.value(list1[i]).toString();
+        }
+        for(int i=0;i<list2.size();i++){
+            qDebug() << exif.value(list2[i]).toString();
+        }
+        for(int i=0;i<list3.size();i++){
+            qDebug() << exif.value(list3[i]).toString();
+        }*/
+
+        //exif.setValue(QExifImageHeader::Orientation,0);
+        exif.setValue(QExifImageHeader::ImageWidth,small.width());
+        exif.setValue(QExifImageHeader::ImageLength,small.height());
+        exif.setValue(QExifImageHeader::PixelXDimension,small.width());
+        exif.setValue(QExifImageHeader::PixelYDimension,small.height());
+        exif.setThumbnail(QImage());
+
+        //exif.saveToJpeg(output);
+    }
+
+    //qDebug() << "Save: " << output;
+    return true;
 }
 
 void Resizer::setToolButtonsEnabled(bool enabled)
@@ -679,7 +789,7 @@ void Resizer::pressAbout()
 {
     QMessageBox *mess = new QMessageBox(this);
     mess->setWindowTitle(tr("About"));
-    mess->setText(tr("Written by %1 (%2)\nVersion: %3","author, year, version").arg(QString::fromUtf8("Léo Baudouin"),"2013",version_));
+    mess->setText(tr("Written by %1 (%2)\nVersion: %3","author, year, version").arg(QString::fromUtf8("Léo Baudouin"),"2014",m_version));
     mess->setIcon(QMessageBox::Information);
     mess->exec();
 }

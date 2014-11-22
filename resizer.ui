@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Resizer</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="ressources.qrc">
+    <normaloff>:/images/resizer</normaloff>:/images/resizer</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
@@ -559,6 +563,20 @@
             </property>
             <property name="maximum">
              <number>8</number>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="closeAfterResizingLabel">
+            <property name="text">
+             <string>Close after resizing:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QCheckBox" name="closeAfterResizingCheckBox">
+            <property name="checked">
+             <bool>true</bool>
             </property>
            </widget>
           </item>

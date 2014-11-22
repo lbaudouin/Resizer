@@ -16,7 +16,6 @@ SOURCES += main.cpp\
     resizer.cpp \
     positionselector.cpp \
     loader.cpp \
-    saver.cpp \
     imagelabel.cpp
 
 HEADERS  += \
@@ -24,7 +23,6 @@ HEADERS  += \
     resizer.h \
     positionselector.h \
     loader.h \
-    saver.h \
     plugininterface.h \
     rotationstate.h \
     imagelabel.h

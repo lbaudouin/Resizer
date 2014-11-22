@@ -27,9 +27,10 @@
 
 #include "positionselector.h"
 
+#include <QtConcurrentMap>
+#include <QFutureWatcher>
 #include <QThreadPool>
 #include "loader.h"
-#include "saver.h"
 
 #include "imagelabel.h"
 
@@ -37,16 +38,25 @@
 #include <QPluginLoader>
 #include <QTimer>
 
-
 namespace Ui {
 class Resizer;
 }
 
-/*struct ImageInfo{
-    QFileInfo fileinfo;
-    MyLabel *label;
+struct ImageInfo{
+    QString filename;
+    QString outputFolder;
+    bool noResize;
     RotationState rotation;
-};*/
+    bool keepExif;
+    bool useRatio;
+    double ratio;
+    int sizeMax;
+
+    bool addLogo;
+    QImage logo;
+    PositionSelector::POSITION logoPosition;
+    QPoint logoShifting;
+};
 
 class Resizer : public QMainWindow
 {
@@ -56,15 +66,16 @@ public:
     explicit Resizer(QWidget *parent = 0);
     ~Resizer();
 
-    inline void setVersion(QString version) { version_ = version; }
+    inline void setVersion(QString version) { m_version = version; }
 
 private:
     Ui::Resizer *ui;
 
     QMap<QString,ImageLabel*> mapImages;
     QProgressDialog *diag_;
-    QString logoPath;
-    QString version_;
+    QProgressDialog *m_resizeProgressDialog;
+    QString m_logoPath;
+    QString m_version;
     int nbColumns_;
 
     QMovie m_loadingMovie;
@@ -91,6 +102,9 @@ protected:
 
     QStringList selected();
 
+    QFutureWatcher<bool> *imageSaver;
+    static bool save(ImageInfo info);
+
 public slots:
     void pressOpenFolder();
     void pressOpenFiles();
@@ -98,6 +112,7 @@ public slots:
     void addList(QStringList);
 
     void resizeAll();
+    void resizeFinished();
 
     void handleMessage(const QString& message);
 
@@ -113,7 +128,6 @@ public slots:
     void displayLabelMenu(QPoint);
 
     void imageLoaded(QString absoluteFilePath, ImageData imageData);
-    void resizeFinished(QString absoluteFilePath);
 
     void removeImage();
     void deleteImage();

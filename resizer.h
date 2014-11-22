@@ -22,6 +22,7 @@
 #include <QMovie>
 
 #include <QSettings>
+#include <QStatusBar>
 
 #include "qexifimageheader/qexifimageheader.h"
 

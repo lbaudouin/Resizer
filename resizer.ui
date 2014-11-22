@@ -43,7 +43,7 @@
              <x>0</x>
              <y>0</y>
              <width>810</width>
-             <height>466</height>
+             <height>464</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout"/>
@@ -600,11 +600,34 @@
      </widget>
     </item>
     <item>
-     <widget class="QDialogButtonBox" name="buttonBox">
-      <property name="standardButtons">
-       <set>QDialogButtonBox::Cancel</set>
-      </property>
-     </widget>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLabel" name="status">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Status</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDialogButtonBox" name="buttonBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="standardButtons">
+         <set>QDialogButtonBox::Cancel</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>

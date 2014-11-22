@@ -46,13 +46,16 @@ Resizer::Resizer(QWidget *parent) :
     //Drop images
     this->setAcceptDrops( true );
 
+    //Initialize
     nbColumns_ = this->width() / 350;
 
+    //Loading dialog
     diag_ = new QProgressDialog(QString(),tr("Cancel"),0,0,this);
     diag_->setWindowTitle(tr("Please wait"));
     diag_->setValue(0);
     diag_->setMinimumDuration(50);
 
+    //Initialize ratio/max size combo
     QStringList listSize;
     listSize << "320" << "480" << "640" << "720" << "800" << "1024" << "1280" << "2048" << "4096";
     ui->comboPixels->addItems( listSize );
@@ -62,6 +65,7 @@ Resizer::Resizer(QWidget *parent) :
     ui->comboRatio->addItems( listRatio );
     ui->comboRatio->setCurrentIndex(3);
 
+    //Set validators
     QIntValidator *validatorNotNull = new QIntValidator(this);
     validatorNotNull->setRange(8,32768);
     ui->comboPixels->lineEdit()->setValidator(validatorNotNull);
@@ -92,9 +96,11 @@ Resizer::Resizer(QWidget *parent) :
 
     connect(ui->buttonLogo,SIGNAL(clicked()),this,SLOT(openLogo()));
 
+    //Buttons
     ui->buttonOpenFiles->setIcon(QIcon(":images/pictures"));
     ui->buttonOpenFolder->setIcon(QIcon(":images/folder"));
 
+    //Actions
     ui->actionAdd_files->setIcon(QIcon(":images/pictures"));
     ui->actionAdd_folder->setIcon(QIcon(":images/folder"));
 
@@ -110,6 +116,7 @@ Resizer::Resizer(QWidget *parent) :
 
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(pressAbout()));
 
+    ui->status->clear();
 
     imageSaver = new QFutureWatcher<bool>(this);
 
@@ -355,6 +362,8 @@ void Resizer::imageLoaded(QString absoluteFilePath, ImageData imgData)
         ui->scrollAreaWidgetContents->show();
         ui->scrollAreaWidgetContents->layout()->update();
     }
+
+    ui->status->setText(tr("%n images","",mapImages.size()));
 }
 
 void Resizer::selectionChanged()
@@ -365,6 +374,11 @@ void Resizer::selectionChanged()
             nbSelected++;
         }
     }
+
+    if(nbSelected>0)
+        ui->status->setText(tr("%n images","",mapImages.size()) + " (" + tr("%n selected","",nbSelected) + ")");
+    else
+        ui->status->setText(tr("%n images","",mapImages.size()));
 
     setToolButtonsEnabled(nbSelected>0);
 }
@@ -448,8 +462,8 @@ void Resizer::removeImage(QStringList absoluteFilePathList)
 
         mapImages.remove(absoluteFilePath);
         emit this->updateNumber( mapImages.count() );
+        ui->status->setText(tr("%n images","",mapImages.size()));
     }
-
 }
 
 void Resizer::deleteImage()
@@ -623,6 +637,10 @@ void Resizer::resizeAll()
         info.filename = label->getAbsoluteFilePath();
         info.rotation = label->rotation();
         images << info;
+
+        //Create output folder here because mkdir is not thread-safe
+        QDir dir = QFileInfo(info.filename).absoluteDir();
+        dir.mkpath(info.outputFolder);
     }
 
     QThreadPool::globalInstance()->setMaxThreadCount(ui->numberOfThreadsSpinBox->value());
@@ -645,7 +663,8 @@ bool Resizer::save(ImageInfo info)
     QString output = fi.absoluteDir().absolutePath() + QDir::separator() + info.outputFolder + QDir::separator() + fi.fileName();
 
     QDir dir(fi.absoluteDir());
-    if(!dir.exists() || !dir.mkpath(info.outputFolder)){
+    if(!dir.exists()){
+        qDebug() << fi.absoluteDir().absolutePath() + " doesn't exist";
         return false;
     }
 

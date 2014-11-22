@@ -5,6 +5,7 @@ Resizer::Resizer(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::Resizer), m_loadingMovie(":images/loading")
 {
+    m_loadingMovie.setScaledSize(QSize(320,320));
     m_loadingMovie.start();
     ui->setupUi(this);
 
@@ -12,8 +13,6 @@ Resizer::Resizer(QWidget *parent) :
 
     QCoreApplication::setAttribute(Qt::AA_DontShowIconsInMenus,false);
     this->setAttribute(Qt::WA_AlwaysShowToolTips,true);
-
-    qRegisterMetaType<ImageData>("ImageData");
 
 #ifdef Q_OS_WIN
     QDir dir("plugins/");
@@ -48,12 +47,6 @@ Resizer::Resizer(QWidget *parent) :
 
     //Initialize
     nbColumns_ = this->width() / 350;
-
-    //Loading dialog
-    diag_ = new QProgressDialog(QString(),tr("Cancel"),0,0,this);
-    diag_->setWindowTitle(tr("Please wait"));
-    diag_->setValue(0);
-    diag_->setMinimumDuration(50);
 
     //Initialize ratio/max size combo
     QStringList listSize;
@@ -118,15 +111,32 @@ Resizer::Resizer(QWidget *parent) :
 
     ui->status->clear();
 
-    imageSaver = new QFutureWatcher<bool>(this);
+    //Loader
+    m_imageLoader = new QFutureWatcher<ImageLoaderInfo>(this);
+    connect(m_imageLoader, SIGNAL(resultReadyAt(int)), SLOT(showImage(int)));
 
-    m_resizeProgressDialog = new QProgressDialog(tr("Resizing..."),tr("Cancel"),0,0,this);
-    m_resizeProgressDialog->setWindowTitle(tr("Please wait"));
+    m_loadingProgressDialog = new QProgressDialog(tr("Loading..."),tr("Cancel"),0,0,this);
+    m_loadingProgressDialog->setWindowTitle(tr("Please wait"));
+    m_loadingProgressDialog->setMinimumDuration(50);
 
-    connect(imageSaver,SIGNAL(progressRangeChanged(int,int)),m_resizeProgressDialog,SLOT(setRange(int,int)));
-    connect(imageSaver,SIGNAL(progressValueChanged(int)),m_resizeProgressDialog,SLOT(setValue(int)));
-    connect(m_resizeProgressDialog,SIGNAL(canceled()),imageSaver,SLOT(cancel()));
-    connect(imageSaver,SIGNAL(finished()),this,SLOT(resizeFinished()));
+    connect(m_imageLoader,SIGNAL(progressRangeChanged(int,int)),m_loadingProgressDialog,SLOT(setRange(int,int)));
+    connect(m_imageLoader,SIGNAL(progressValueChanged(int)),m_loadingProgressDialog,SLOT(setValue(int)));
+    connect(m_imageLoader,SIGNAL(progressValueChanged(int)),this,SLOT(progressChanged(int)));
+    connect(m_loadingProgressDialog,SIGNAL(canceled()),m_imageLoader,SLOT(cancel()));
+    connect(m_imageLoader,SIGNAL(finished()),this,SLOT(loadFinished()));
+
+    //Saver
+    m_imageSaver = new QFutureWatcher<bool>(this);
+
+    m_resizingProgressDialog = new QProgressDialog(tr("Resizing..."),tr("Cancel"),0,0,this);
+    m_resizingProgressDialog->setWindowTitle(tr("Please wait"));
+    m_resizingProgressDialog->setMinimumDuration(50);
+
+    connect(m_imageSaver,SIGNAL(progressRangeChanged(int,int)),m_resizingProgressDialog,SLOT(setRange(int,int)));
+    connect(m_imageSaver,SIGNAL(progressValueChanged(int)),m_resizingProgressDialog,SLOT(setValue(int)));
+    connect(m_imageSaver,SIGNAL(progressValueChanged(int)),this,SLOT(progressChanged(int)));
+    connect(m_resizingProgressDialog,SIGNAL(canceled()),m_imageSaver,SLOT(cancel()));
+    connect(m_imageSaver,SIGNAL(finished()),this,SLOT(resizeFinished()));
 }
 
 Resizer::~Resizer()
@@ -216,9 +226,7 @@ void Resizer::pressOpenFolder()
 
     QCoreApplication::processEvents();
 
-    diag_->setMaximum(0);
-    addFile(path);
-    //emit this->addFiles(QStringList() << path);
+    addFilesAndFolders(QStringList() << path);
 }
 
 void Resizer::pressOpenFiles()
@@ -242,42 +250,39 @@ void Resizer::pressOpenFiles()
     }
     QCoreApplication::processEvents();
 
-    //emit this->addFiles(absoluteFilepaths);
-    diag_->setMaximum(0);
-    addList(absoluteFilepaths);
+    addFiles(absoluteFilepaths);
 }
 
-void Resizer::addList(QStringList paths)
+void Resizer::addFilesAndFolders(QStringList paths)
 {
-    if(paths.size()>1){
-        diag_->setLabelText(tr("Loading..."));
-        diag_->show();
-    }
+    QStringList absoluteFilepaths;
 
-    setUpdatesEnabled(false);
-
-    QThreadPool::globalInstance()->setMaxThreadCount( ui->numberOfThreadsSpinBox->value() );
-
-    for(int i=0;i<paths.size();i++){
-
-        QString filepath = paths[i];
-        QFileInfo fi(filepath);
-
-        //Parse directory
-        if(fi.isDir()){
-            QDir dir(filepath);
+    foreach(QString path, paths){
+        QFileInfo fileinfo(path);
+        if(fileinfo.isDir()){
+            QDir dir(fileinfo.absoluteFilePath());
             if(!dir.exists())
                 continue;
 
             dir.setFilter(QDir::Files);
             QStringList filenames = dir.entryList();
 
-            QStringList absoluteFilepaths;
             for(int i=0;i<filenames.size();i++)
                 absoluteFilepaths << dir.absoluteFilePath(filenames.at(i));
-            addList(absoluteFilepaths);
-            continue;
+        }else{
+            absoluteFilepaths << fileinfo.absoluteFilePath();
         }
+    }
+    addFiles(absoluteFilepaths);
+}
+
+void Resizer::addFiles(QStringList files)
+{
+    setUpdatesEnabled(false);
+
+    QStringList filesToLoad;
+    foreach(QString filepath, files){
+        QFileInfo fi(filepath);
 
         //Avoid duplicates
         if(mapImages.contains(fi.absoluteFilePath()))
@@ -291,7 +296,6 @@ void Resizer::addList(QStringList paths)
 
         //Create label
         ImageLabel *label = new ImageLabel(fi.absoluteFilePath());
-        //label->setPixmap( m_loading );
         label->setMovie(&m_loadingMovie);
         label->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
         label->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -305,68 +309,68 @@ void Resizer::addList(QStringList paths)
         //Add to list
         mapImages.insert(fi.absoluteFilePath(),label);
 
-        //Update number of images
-        diag_->setMaximum( diag_->maximum() + 1 );
+        emit this->updateNumber(mapImages.count());
 
-        //Create loader
-        Loader * loader = new Loader;
-        loader->setFileInfo(fi);
-        loader->setNeedRotation(ui->autoDetectRotationCheckBox->isChecked());
-
-        connect(loader,SIGNAL(imageLoaded(QString,ImageData)),this,SLOT(imageLoaded(QString,ImageData)),Qt::QueuedConnection);
-
-        QThreadPool::globalInstance()->start(loader);
+        filesToLoad << fi.absoluteFilePath();
     }
 
+    QThreadPool::globalInstance()->setMaxThreadCount(ui->numberOfThreadsSpinBox->value());
+
+    m_imageLoader->setFuture(QtConcurrent::mapped(filesToLoad, load));
+    m_loadingProgressDialog->show();
+
+    //Update status
+    updateStatus();
+}
+
+ImageLoaderInfo Resizer::load(QString filename)
+{
+    ImageLoaderInfo info;
+    QImageReader reader(filename);
+    QSize imageSize = reader.size();
+
+    if(imageSize.isValid()){
+        imageSize.scale(320,320,Qt::KeepAspectRatio);
+        reader.setScaledSize(imageSize);
+        info.image = reader.read();
+    }else{
+        info.image = QImage(filename).scaled(320,320,Qt::KeepAspectRatio);
+    }
+    info.filename = filename;
+    return info;
+}
+
+void Resizer::loadFinished()
+{
     setUpdatesEnabled(true);
-
-    if(diag_->maximum()==0){
-        diag_->close();
-    }
+    repaint();
 }
 
-void Resizer::addFile(QString filepath)
+void Resizer::showImage(int num)
 {
-    addList(QStringList() << filepath);
-}
-
-void Resizer::removeFile(QString filepath)
-{
-    QFileInfo fi(filepath);
-
-    mapImages.remove(fi.absoluteFilePath());
-
-    repaintGrid();
-}
-
-void Resizer::imageLoaded(QString absoluteFilePath, ImageData imgData)
-{
-    if(imgData.image.isNull()){
-        qDebug() << "Failed to load:" << absoluteFilePath;
+    ImageLoaderInfo info = m_imageLoader->resultAt(num);
+    if(mapImages.contains(info.filename)){
+        mapImages[info.filename]->setPixmap(QPixmap::fromImage(info.image));
+        if(ui->autoDetectRotationCheckBox->isChecked())
+            mapImages[info.filename]->detectRotation();
     }
-
-    mapImages[absoluteFilePath]->setPixmapAndRotation(QPixmap::fromImage(imgData.image), imgData.rotation );
-
-    emit this->updateNumber( mapImages.count() );
-
-    if(diag_->value()<0)
-        diag_->setValue(1);
-    else
-        diag_->setValue( diag_->value() +1 );
-
-    emit this->updateProgressBar(diag_->minimum(),diag_->maximum(),diag_->value());
-
-    if(diag_->value()<0){
-        diag_->close();
-        diag_->setMaximum(0);
-        ui->scrollAreaWidgetContents->show();
-        ui->scrollAreaWidgetContents->layout()->update();
-    }
-
-    ui->status->setText(tr("%n images","",mapImages.size()));
 }
 
 void Resizer::selectionChanged()
+{
+    bool selectionIsEmpty = true;
+    foreach(ImageLabel* label, mapImages){
+        if(label->selected()){
+            selectionIsEmpty = false;
+            break;
+        }
+    }
+
+    setToolButtonsEnabled(!selectionIsEmpty);
+    updateStatus();
+}
+
+void Resizer::updateStatus()
 {
     int nbSelected = 0;
     foreach(ImageLabel* label, mapImages){
@@ -375,12 +379,12 @@ void Resizer::selectionChanged()
         }
     }
 
-    if(nbSelected>0)
+    if(nbSelected==0)
+        ui->status->setText("");
+    else if(nbSelected>0)
         ui->status->setText(tr("%n images","",mapImages.size()) + " (" + tr("%n selected","",nbSelected) + ")");
     else
         ui->status->setText(tr("%n images","",mapImages.size()));
-
-    setToolButtonsEnabled(nbSelected>0);
 }
 
 void Resizer::selectAll()
@@ -462,7 +466,9 @@ void Resizer::removeImage(QStringList absoluteFilePathList)
 
         mapImages.remove(absoluteFilePath);
         emit this->updateNumber( mapImages.count() );
-        ui->status->setText(tr("%n images","",mapImages.size()));
+
+        //Update status
+        updateStatus();
     }
 }
 
@@ -605,7 +611,7 @@ void Resizer::resizeAll()
     if(mapImages.isEmpty())
         return;
 
-    ImageInfo defaultInfo;
+    ImageSaverInfo defaultInfo;
     defaultInfo.noResize = ui->noResizeCheckBox->isChecked();
     defaultInfo.outputFolder = ui->outputSubfolderLineEdit->text();
     defaultInfo.keepExif = ui->keepExifInfoCheckBox->isChecked();
@@ -631,9 +637,9 @@ void Resizer::resizeAll()
         defaultInfo.logoShifting = QPoint(posX,posY);
     }
 
-    QList<ImageInfo> images;
+    QList<ImageSaverInfo> images;
     foreach(ImageLabel *label, mapImages){
-        ImageInfo info = defaultInfo;
+        ImageSaverInfo info = defaultInfo;
         info.filename = label->getAbsoluteFilePath();
         info.rotation = label->rotation();
         images << info;
@@ -645,19 +651,19 @@ void Resizer::resizeAll()
 
     QThreadPool::globalInstance()->setMaxThreadCount(ui->numberOfThreadsSpinBox->value());
 
-    imageSaver->setFuture(QtConcurrent::mapped(images, save));
-    m_resizeProgressDialog->show();
+    m_imageSaver->setFuture(QtConcurrent::mapped(images, save));
+    m_resizingProgressDialog->show();
 }
 
 void Resizer::resizeFinished()
 {
     emit this->finished();
-    if(ui->closeAfterResizingCheckBox->isChecked() && !m_resizeProgressDialog->wasCanceled()){
+    if(ui->closeAfterResizingCheckBox->isChecked() && !m_resizingProgressDialog->wasCanceled()){
         this->close();
     }
 }
 
-bool Resizer::save(ImageInfo info)
+bool Resizer::save(ImageSaverInfo info)
 {
     QFileInfo fi(info.filename);
     QString output = fi.absoluteDir().absolutePath() + QDir::separator() + info.outputFolder + QDir::separator() + fi.fileName();
@@ -785,7 +791,7 @@ void Resizer::dropEvent(QDropEvent *event)
         files << url.toLocalFile();
     }
 
-    addList(files);
+    addFilesAndFolders(files);
 }
 
 void Resizer::dragEnterEvent(QDragEnterEvent *event)
@@ -803,6 +809,19 @@ void Resizer::dragLeaveEvent(QDragLeaveEvent* event)
     event->accept();
 }
 
+void Resizer::progressChanged(int /*value*/)
+{
+    if(sender()==m_imageLoader){
+        emit updateProgressBar(m_imageLoader->progressMinimum(),m_imageLoader->progressMaximum(),m_imageLoader->progressValue());
+        if(m_imageLoader->progressMaximum()==m_imageLoader->progressValue())
+            emit updateProgressBar(0,0,-1);
+    }
+    if(sender()==m_imageSaver){
+        emit updateProgressBar(m_imageSaver->progressMinimum(),m_imageSaver->progressMaximum(),m_imageSaver->progressValue());
+        if(m_imageSaver->progressMaximum()==m_imageSaver->progressValue())
+            emit updateProgressBar(0,0,-1);
+    }
+}
 
 void Resizer::pressAbout()
 {
@@ -844,7 +863,7 @@ void Resizer::handleMessage(const QString& message)
 
     case Open:
     {
-        addList(filename.split("\n"));
+        addFilesAndFolders(filename.split("\n"));
         emit needToShow();
     }
     break;

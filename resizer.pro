@@ -15,14 +15,12 @@ SOURCES += main.cpp\
     qexifimageheader/qexifimageheader.cpp \
     resizer.cpp \
     positionselector.cpp \
-    loader.cpp \
     imagelabel.cpp
 
 HEADERS  += \
     qexifimageheader/qexifimageheader.h \
     resizer.h \
     positionselector.h \
-    loader.h \
     plugininterface.h \
     rotationstate.h \
     imagelabel.h

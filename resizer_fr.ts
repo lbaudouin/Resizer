@@ -82,12 +82,12 @@
         <translation>Resizer</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="25"/>
+        <location filename="resizer.ui" line="29"/>
         <source>Images</source>
         <translation>Images</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="347"/>
+        <location filename="resizer.ui" line="351"/>
         <source>Options</source>
         <translation>Options</translation>
     </message>
@@ -104,67 +104,67 @@
         <translation type="obsolete">Ne pas redimensionner</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="365"/>
+        <location filename="resizer.ui" line="369"/>
         <source>Maximum size</source>
         <translation>Taille maximum</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="412"/>
+        <location filename="resizer.ui" line="416"/>
         <source>pixels</source>
         <translation>pixels</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="429"/>
+        <location filename="resizer.ui" line="433"/>
         <source>Ratio</source>
         <translation>Ratio</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="470"/>
+        <location filename="resizer.ui" line="474"/>
         <source>%</source>
         <translation>%</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="224"/>
+        <location filename="resizer.ui" line="228"/>
         <source>Add logo</source>
         <translation>Ajouter un logo</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="57"/>
-        <location filename="resizer.ui" line="71"/>
-        <location filename="resizer.ui" line="92"/>
-        <location filename="resizer.ui" line="106"/>
-        <location filename="resizer.ui" line="120"/>
-        <location filename="resizer.ui" line="134"/>
-        <location filename="resizer.ui" line="155"/>
-        <location filename="resizer.ui" line="169"/>
-        <location filename="resizer.ui" line="240"/>
+        <location filename="resizer.ui" line="61"/>
+        <location filename="resizer.ui" line="75"/>
+        <location filename="resizer.ui" line="96"/>
+        <location filename="resizer.ui" line="110"/>
+        <location filename="resizer.ui" line="124"/>
+        <location filename="resizer.ui" line="138"/>
+        <location filename="resizer.ui" line="159"/>
+        <location filename="resizer.ui" line="173"/>
+        <location filename="resizer.ui" line="244"/>
         <source>...</source>
         <translation>...</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="215"/>
-        <location filename="resizer.ui" line="262"/>
-        <location filename="resizer.cpp" line="587"/>
+        <location filename="resizer.ui" line="219"/>
+        <location filename="resizer.ui" line="266"/>
+        <location filename="resizer.cpp" line="578"/>
         <source>Logo</source>
         <translation>Logo</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="276"/>
+        <location filename="resizer.ui" line="280"/>
         <source>Attach</source>
         <translation>Attache</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="295"/>
+        <location filename="resizer.ui" line="299"/>
         <source>Shiftting</source>
         <translation>Décalage</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="303"/>
+        <location filename="resizer.ui" line="307"/>
         <source>Horizontal:</source>
         <translation>Horizontal :</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="313"/>
+        <location filename="resizer.ui" line="317"/>
         <source>Vertical:</source>
         <translation>Vertical :</translation>
     </message>
@@ -189,144 +189,172 @@
         <translation type="obsolete">Pos Y</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="355"/>
+        <location filename="resizer.ui" line="359"/>
         <source>Mode:</source>
         <translation>Mode :</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="501"/>
+        <location filename="resizer.ui" line="505"/>
         <source>Keep Exif info:</source>
         <translation>Garder les informations Exif :</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="515"/>
+        <location filename="resizer.ui" line="519"/>
         <source>Auto-detect rotation:</source>
         <translation>Auto-détection de la rotation :</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="525"/>
+        <location filename="resizer.ui" line="529"/>
         <source>No resize:</source>
         <translation>Ne pas redimensionner :</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="535"/>
+        <location filename="resizer.ui" line="539"/>
         <source>Add logo automaticaly:</source>
         <translation>Ajouter le logo automatiquement :</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="545"/>
+        <location filename="resizer.ui" line="549"/>
         <source>Number of threads:</source>
         <oldsource>Number of threads</oldsource>
         <translation>Nombre de threads :</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="487"/>
+        <location filename="resizer.ui" line="491"/>
         <source>Output subfolder:</source>
         <translation>Sous-dossier de sortie :</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="54"/>
+        <location filename="resizer.ui" line="58"/>
         <source>Select All</source>
         <translation>Sélectionner tout</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="68"/>
+        <location filename="resizer.ui" line="72"/>
         <source>Deselect All</source>
         <translation>Déselectionner tout</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="193"/>
+        <location filename="resizer.ui" line="197"/>
         <source>Open Folder</source>
         <translation>Ajouter un dossier</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="205"/>
+        <location filename="resizer.ui" line="209"/>
         <source>Open Files</source>
         <translation>Ajouter des fichiers</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="494"/>
-        <location filename="resizer.cpp" line="155"/>
+        <location filename="resizer.ui" line="498"/>
+        <location filename="resizer.cpp" line="183"/>
         <source>Small</source>
         <translation>Réduites</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="604"/>
+        <location filename="resizer.ui" line="572"/>
+        <source>Close after resizing:</source>
+        <translation>Fermer après redimensionnement :</translation>
+    </message>
+    <message>
+        <location filename="resizer.ui" line="613"/>
+        <source>Status</source>
+        <translation>Statut</translation>
+    </message>
+    <message>
+        <location filename="resizer.ui" line="645"/>
         <source>Menu</source>
         <translation>Menu</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="613"/>
+        <location filename="resizer.ui" line="654"/>
         <source>?</source>
         <translation>?</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="623"/>
+        <location filename="resizer.ui" line="664"/>
         <source>Add files</source>
         <translation>Ajouter des fichiers</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="626"/>
+        <location filename="resizer.ui" line="667"/>
         <source>Ctrl+O</source>
         <translation>Ctrl+O</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="634"/>
+        <location filename="resizer.ui" line="675"/>
         <source>Add folder</source>
         <translation>Ajouter un dossier</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="637"/>
+        <location filename="resizer.ui" line="678"/>
         <source>Ctrl+Shift+O</source>
         <translation>Ctrl+Shift+O</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="649"/>
+        <location filename="resizer.ui" line="690"/>
         <source>Quit</source>
         <translation>Quitter</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="652"/>
+        <location filename="resizer.ui" line="693"/>
         <source>Ctrl+Q</source>
         <translation>Ctrl+Q</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="667"/>
+        <location filename="resizer.ui" line="708"/>
         <source>Help</source>
         <translation>Aide</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="679"/>
-        <location filename="resizer.cpp" line="682"/>
+        <location filename="resizer.ui" line="720"/>
+        <location filename="resizer.cpp" line="810"/>
         <source>About</source>
         <translation>A propos</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="195"/>
+        <location filename="resizer.cpp" line="224"/>
         <source>Select a Folder</source>
         <translation>Choisir un dossier</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="216"/>
+        <location filename="resizer.cpp" line="244"/>
         <source>Select Files</source>
         <translation>Choisir des ficihiers</translation>
     </message>
+    <message numerus="yes">
+        <location filename="resizer.cpp" line="366"/>
+        <location filename="resizer.cpp" line="368"/>
+        <location filename="resizer.cpp" line="452"/>
+        <source>%n images</source>
+        <translation>
+            <numerusform>%n image</numerusform>
+            <numerusform>%n images</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="resizer.cpp" line="366"/>
+        <source>%n selected</source>
+        <translation>
+            <numerusform>%n sélectionnée</numerusform>
+            <numerusform>%n sélectionnées</numerusform>
+        </translation>
+    </message>
     <message>
-        <location filename="resizer.cpp" line="484"/>
+        <location filename="resizer.cpp" line="475"/>
         <source>This will delete the image files from your computer.
 Are you sure to continue ?</source>
         <translation>Ceci va supprimer les images de votre ordinateur.
 Etes-vous certain de vouloir continuer ?</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="487"/>
+        <location filename="resizer.cpp" line="478"/>
         <source>This will delete the image file &apos;%1&apos; from your computer.
 Are you sure to continue ?</source>
         <translation>Ceci va supprimer l&apos;image &apos;%1&apos; de votre ordinateur.
 Etes-vous certain de vouloir continuer ?</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="573"/>
+        <location filename="resizer.cpp" line="564"/>
         <source>Image files (*.jpg *.jpeg *.png)</source>
         <translation>Image (*.jpg *.jpeg *.png)</translation>
     </message>
@@ -335,64 +363,66 @@ Etes-vous certain de vouloir continuer ?</translation>
         <translation type="obsolete">Chargement</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="51"/>
+        <location filename="resizer.cpp" line="118"/>
+        <location filename="resizer.cpp" line="131"/>
         <source>Cancel</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="52"/>
+        <location filename="resizer.cpp" line="119"/>
+        <location filename="resizer.cpp" line="132"/>
         <source>Please wait</source>
         <translation>Veuillez patienter</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="101"/>
+        <location filename="resizer.cpp" line="100"/>
         <source>Resize</source>
         <translation>Redimensionner</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="216"/>
+        <location filename="resizer.cpp" line="244"/>
         <source>Image files (%1)</source>
         <translation>Image (%1)</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="232"/>
+        <location filename="resizer.cpp" line="118"/>
         <source>Loading...</source>
         <translation>Chargement...</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="89"/>
-        <location filename="resizer.cpp" line="412"/>
+        <location filename="resizer.ui" line="93"/>
+        <location filename="resizer.cpp" line="403"/>
         <source>Detect rotation</source>
         <translation>Rotation automatique</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="103"/>
-        <location filename="resizer.cpp" line="413"/>
+        <location filename="resizer.ui" line="107"/>
+        <location filename="resizer.cpp" line="404"/>
         <source>Reset rotation</source>
         <translation>Ré-initialiser la rotation</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="117"/>
-        <location filename="resizer.cpp" line="414"/>
+        <location filename="resizer.ui" line="121"/>
+        <location filename="resizer.cpp" line="405"/>
         <source>Rotate to left</source>
         <translation>Tourner vers la gauche</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="131"/>
-        <location filename="resizer.cpp" line="415"/>
+        <location filename="resizer.ui" line="135"/>
+        <location filename="resizer.cpp" line="406"/>
         <source>Rotate to right</source>
         <translation>Tourner vers la droite</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="152"/>
-        <location filename="resizer.cpp" line="417"/>
+        <location filename="resizer.ui" line="156"/>
+        <location filename="resizer.cpp" line="408"/>
         <source>Remove from grid</source>
         <translation>Retirer de la grille</translation>
     </message>
     <message>
-        <location filename="resizer.ui" line="166"/>
-        <location filename="resizer.cpp" line="418"/>
-        <location filename="resizer.cpp" line="482"/>
+        <location filename="resizer.ui" line="170"/>
+        <location filename="resizer.cpp" line="409"/>
+        <location filename="resizer.cpp" line="473"/>
         <source>Delete file</source>
         <translation>Supprimer le fichier</translation>
     </message>
@@ -403,32 +433,32 @@ Are you sure to continue ?</source>
 Etes-vous certain de vouloir continuer ?</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="490"/>
+        <location filename="resizer.cpp" line="481"/>
         <source>Move to Trash</source>
         <translation>Mettre à la Corbeille</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="492"/>
+        <location filename="resizer.cpp" line="483"/>
         <source>Remove file</source>
         <translation>Supprimer le fichier</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="573"/>
+        <location filename="resizer.cpp" line="564"/>
         <source>Select Logo</source>
         <translation>Choisir un logo</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="597"/>
+        <location filename="resizer.cpp" line="588"/>
         <source>Warning</source>
         <translation>Attention</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="597"/>
+        <location filename="resizer.cpp" line="588"/>
         <source>You need to set an output subfolder name</source>
         <translation>Vous devez entrer un sous-dossier de sortie</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="602"/>
+        <location filename="resizer.cpp" line="131"/>
         <source>Resizing...</source>
         <translation>Redimensionnement...</translation>
     </message>
@@ -437,7 +467,7 @@ Etes-vous certain de vouloir continuer ?</translation>
         <translation type="obsolete">Progression</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="683"/>
+        <location filename="resizer.cpp" line="811"/>
         <source>Written by %1 (%2)
 Version: %3</source>
         <comment>author, year, version</comment>
@@ -445,7 +475,7 @@ Version: %3</source>
 Version : %3</translation>
     </message>
     <message>
-        <location filename="resizer.cpp" line="714"/>
+        <location filename="resizer.cpp" line="842"/>
         <source>Information</source>
         <translation>Information</translation>
     </message>

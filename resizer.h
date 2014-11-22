@@ -31,7 +31,6 @@
 #include <QtConcurrentMap>
 #include <QFutureWatcher>
 #include <QThreadPool>
-#include "loader.h"
 
 #include "imagelabel.h"
 
@@ -43,7 +42,12 @@ namespace Ui {
 class Resizer;
 }
 
-struct ImageInfo{
+struct ImageLoaderInfo{
+    QImage image;
+    QString filename;
+};
+
+struct ImageSaverInfo{
     QString filename;
     QString outputFolder;
     bool noResize;
@@ -73,13 +77,16 @@ private:
     Ui::Resizer *ui;
 
     QMap<QString,ImageLabel*> mapImages;
-    QProgressDialog *diag_;
-    QProgressDialog *m_resizeProgressDialog;
+    QProgressDialog *m_resizingProgressDialog;
+    QProgressDialog *m_loadingProgressDialog;
     QString m_logoPath;
     QString m_version;
     int nbColumns_;
 
     QMovie m_loadingMovie;
+
+    QFutureWatcher<ImageLoaderInfo> *m_imageLoader;
+    QFutureWatcher<bool> *m_imageSaver;
 
 protected:
     void dropEvent(QDropEvent *event);
@@ -88,9 +95,6 @@ protected:
     void dragLeaveEvent( QDragLeaveEvent *event );
 
     void resizeEvent(QResizeEvent *);
-
-    void addFile(QString);
-    void removeFile(QString);
 
     void repaintGrid();
 
@@ -103,14 +107,17 @@ protected:
 
     QStringList selected();
 
-    QFutureWatcher<bool> *imageSaver;
-    static bool save(ImageInfo info);
+    static ImageLoaderInfo load(QString filename);
+    static bool save(ImageSaverInfo info);
 
 public slots:
     void pressOpenFolder();
     void pressOpenFiles();
 
-    void addList(QStringList);
+    void addFilesAndFolders(QStringList);
+    void addFiles(QStringList);
+    void showImage(int);
+    void loadFinished();
 
     void resizeAll();
     void resizeFinished();
@@ -127,8 +134,6 @@ public slots:
     void restart(QString path);
 
     void displayLabelMenu(QPoint);
-
-    void imageLoaded(QString absoluteFilePath, ImageData imageData);
 
     void removeImage();
     void deleteImage();
@@ -151,9 +156,12 @@ public slots:
     void deselectAll();
     void selectionChanged();
 
+    void updateStatus();
+
+    void progressChanged(int value);
+
 signals:
     void needToShow();
-    //void addFiles(QStringList);
 
     void finished();
     void updateProgressBar(int min, int max, int value);

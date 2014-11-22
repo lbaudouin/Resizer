@@ -9,5 +9,5 @@ PKGCONFIG += unity
 
 TEMPLATE = lib
 CONFIG += plugin
-TARGET = unity-plugin
-#TARGET = $$qtLibraryTarget(unity-plugin)
+TARGET = resizer-plugin-unity
+#TARGET = $$qtLibraryTarget(resizer-plugin-unity)

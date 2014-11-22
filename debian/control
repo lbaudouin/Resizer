@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Léo Baudouin <baudouin.leo@gmail.com>
 Build-Depends: build-essential, libqt4-dev, qt4-qmake
 Standards-Version: 3.9.3
-Homepage: http://lbaudouin.chez.com/
+Homepage: http://lbaudouin.fr/
 
 Package: resizer
 Architecture: any

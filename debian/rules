@@ -12,7 +12,7 @@ build:
 binary: binary-indep binary-arch
 
 binary-indep:
-	# nothing to be done
+# nothing to be done
 
 binary-arch:
 	mkdir -p debian/tmp/DEBIAN

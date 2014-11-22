@@ -15,10 +15,10 @@ void ResizerUnity::updateProgressBar(int min, int max, int val)
 {
     if(min>max)
         std::swap(min,max);
-    if(val<0 || min<0 || max<=0){
+    if(val<0 || min<0 || max<=0 || min==max){
         unity_launcher_entry_set_progress_visible(unity, false);
     }else{
-        double progress = (val-min)/max;
+        double progress = (val-min)/(max-min);
         unity_launcher_entry_set_progress(unity, progress);
         unity_launcher_entry_set_progress_visible(unity, true);
     }
@@ -50,4 +50,4 @@ void ResizerUnity::finished()
     loop->exec();
 }
 
-Q_EXPORT_PLUGIN2(unity-plugin, ResizerUnity)
+Q_EXPORT_PLUGIN2(resizer-plugin-unity, ResizerUnity)

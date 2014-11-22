@@ -1,3 +1,9 @@
+resizer-plugin-unity (0.0.2) precise; urgency=low
+
+  * Rename library file
+
+ -- Léo Baudouin <baudouin.leo@gmail.com>  Sat, 22 Nov 2014 22:30:34 +0100
+
 resizer-plugin-unity (0.0.1) precise; urgency=low
 
   * Initial upload!

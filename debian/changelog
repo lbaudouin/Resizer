@@ -1,3 +1,11 @@
+resizer (0.2.2) precise; urgency=low
+
+  * Use QtConcurrent
+  * Add tool buttons
+  * Fix mkdir mistake
+
+ -- Léo Baudouin <baudouin.leo@gmail.com>  Sat, 22 Nov 2014 21:39:51 +0100
+
 resizer (0.1.8) precise; urgency=low
 
   * Add tootips

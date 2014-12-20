@@ -9,6 +9,9 @@ Resizer::Resizer(QWidget *parent) :
     m_loadingMovie.start();
     ui->setupUi(this);
 
+    ui->tempButton->hide();
+    ui->zipButton->hide();
+
     setToolButtonsEnabled(false);
 
     QCoreApplication::setAttribute(Qt::AA_DontShowIconsInMenus,false);
@@ -89,18 +92,23 @@ Resizer::Resizer(QWidget *parent) :
 
     connect(ui->buttonLogo,SIGNAL(clicked()),this,SLOT(openLogo()));
 
-    //Buttons
+    //Actions
+    connect(ui->actionDisplay_Temporary_button,SIGNAL(toggled(bool)),ui->tempButton,SLOT(setVisible(bool)));
+    connect(ui->actionDisplay_Zip_button,SIGNAL(toggled(bool)),ui->zipButton,SLOT(setVisible(bool)));
+
+    //Icons
     ui->buttonOpenFiles->setIcon(QIcon(":images/pictures"));
     ui->buttonOpenFolder->setIcon(QIcon(":images/folder"));
-
-    //Actions
     ui->actionAdd_files->setIcon(QIcon(":images/pictures"));
     ui->actionAdd_folder->setIcon(QIcon(":images/folder"));
 
-    ui->buttonBox->addButton(tr("Resize"),QDialogButtonBox::AcceptRole);
-    connect(ui->buttonBox,SIGNAL(rejected()),this,SLOT(close()));
-    connect(ui->buttonBox,SIGNAL(accepted()),this,SLOT(resizeAll()));
+    //Buttons
+    connect(ui->cancelButton,SIGNAL(clicked()),this,SLOT(close()));
+    connect(ui->zipButton,SIGNAL(clicked()),this,SLOT(resizeAndZip()));
+    connect(ui->tempButton,SIGNAL(clicked()),this,SLOT(resizeInTemp()));
+    connect(ui->resizeButton,SIGNAL(clicked()),this,SLOT(resizeInFolders()));
 
+    //Init
     ui->numberOfThreadsSpinBox->setMaximum( QThread::idealThreadCount() );
 
     readSettings();
@@ -117,6 +125,7 @@ Resizer::Resizer(QWidget *parent) :
 
     m_loadingProgressDialog = new QProgressDialog(tr("Loading..."),tr("Cancel"),0,0,this);
     m_loadingProgressDialog->setWindowTitle(tr("Please wait"));
+    m_loadingProgressDialog->setModal(true);
     m_loadingProgressDialog->setMinimumDuration(50);
 
     connect(m_imageLoader,SIGNAL(progressRangeChanged(int,int)),m_loadingProgressDialog,SLOT(setRange(int,int)));
@@ -130,6 +139,7 @@ Resizer::Resizer(QWidget *parent) :
 
     m_resizingProgressDialog = new QProgressDialog(tr("Resizing..."),tr("Cancel"),0,0,this);
     m_resizingProgressDialog->setWindowTitle(tr("Please wait"));
+    m_loadingProgressDialog->setModal(true);
     m_resizingProgressDialog->setMinimumDuration(50);
 
     connect(m_imageSaver,SIGNAL(progressRangeChanged(int,int)),m_resizingProgressDialog,SLOT(setRange(int,int)));
@@ -174,6 +184,9 @@ void Resizer::writeSettings()
     settings.setValue("logo/shift-x",ui->horizontalLineEdit->text().toInt());
     settings.setValue("logo/shift-y",ui->verticalLineEdit->text().toInt());
     settings.setValue("logo/path",m_logoPath);
+
+    settings.setValue("display/temp",ui->actionDisplay_Temporary_button->isChecked());
+    settings.setValue("display/zip",ui->actionDisplay_Zip_button->isChecked());
 }
 
 void Resizer::readSettings()
@@ -205,6 +218,9 @@ void Resizer::readSettings()
     ui->horizontalLineEdit->setText( settings.value("logo/shift-x",25).toString() );
     ui->verticalLineEdit->setText( settings.value("logo/shift-y",25).toString() );
     m_logoPath = settings.value("logo/path",QDesktopServices::storageLocation(QDesktopServices::PicturesLocation)  + QDir::separator() + "logo.png").toString();
+
+    ui->actionDisplay_Temporary_button->setChecked( settings.value("display/temp",false).toBool() );
+    ui->actionDisplay_Zip_button->setChecked( settings.value("display/zip",true).toBool() );
 }
 
 void Resizer::setRatioMode(bool ratioMode)
@@ -601,15 +617,54 @@ void Resizer::setLogo(QString path)
     }
 }
 
-void Resizer::resizeAll()
+void Resizer::resizeInFolders()
 {
-    if(ui->outputSubfolderLineEdit->text().isEmpty()){
-        QMessageBox::warning(this,tr("Warning"),tr("You need to set an output subfolder name"));
-        return;
-    }
-
     if(mapImages.isEmpty())
         return;
+    resizeAll();
+
+    if(ui->closeAfterResizingCheckBox->isChecked()){
+        connect(this,SIGNAL(finished()),this,SLOT(close()));
+    }
+}
+
+void Resizer::resizeInTemp()
+{
+    if(mapImages.isEmpty())
+        return;
+    m_currentTempFolder = QDir::tempPath() + QDir::separator() + "resizer-" + QString::number(rand()%8999+1000);
+    resizeAll(m_currentTempFolder);
+
+    connect(this,SIGNAL(finished()),this,SLOT(openTempFolder()));
+}
+
+void Resizer::resizeAndZip()
+{
+    if(mapImages.isEmpty())
+        return;
+    m_currentTempFolder = QDir::tempPath() + QDir::separator() + "resizer-" + QString::number(rand()%8999+1000);
+    resizeAll(m_currentTempFolder);
+
+    connect(this,SIGNAL(finished()),this,SLOT(zipTempFolder()));
+}
+
+void Resizer::resizeAll(QString outputFolder)
+{
+    if(mapImages.isEmpty())
+        return;
+
+    if(outputFolder.isEmpty()){
+        outputFolder = ui->outputSubfolderLineEdit->text();
+
+        if(outputFolder.isEmpty()){
+            QMessageBox::warning(this,tr("Warning"),tr("You need to set an output subfolder name"));
+            return;
+        }
+    }
+
+    ui->tempButton->setEnabled(false);
+    ui->zipButton->setEnabled(false);
+    ui->resizeButton->setEnabled(false);
 
     ImageSaverInfo defaultInfo;
     defaultInfo.noResize = ui->noResizeCheckBox->isChecked();
@@ -642,23 +697,80 @@ void Resizer::resizeAll()
         ImageSaverInfo info = defaultInfo;
         info.filename = label->getAbsoluteFilePath();
         info.rotation = label->rotation();
-        images << info;
 
         //Create output folder here because mkdir is not thread-safe
         QDir dir = QFileInfo(info.filename).absoluteDir();
-        dir.mkpath(info.outputFolder);
+
+        if(dir.mkpath(outputFolder)){
+            info.outputFolder = dir.absoluteFilePath(outputFolder);
+            images << info;
+        }
     }
 
     QThreadPool::globalInstance()->setMaxThreadCount(ui->numberOfThreadsSpinBox->value());
 
     m_imageSaver->setFuture(QtConcurrent::mapped(images, save));
+
+    //WARNING: No modal dialog
     m_resizingProgressDialog->show();
 }
 
 void Resizer::resizeFinished()
 {
-    emit this->finished();
-    if(ui->closeAfterResizingCheckBox->isChecked() && !m_resizingProgressDialog->wasCanceled()){
+    if(!m_resizingProgressDialog->wasCanceled()){
+        emit this->finished();
+    }
+    ui->tempButton->setEnabled(true);
+    ui->zipButton->setEnabled(true);
+    ui->resizeButton->setEnabled(true);
+}
+
+void Resizer::openTempFolder()
+{
+    disconnect(this,SIGNAL(finished()),this,SLOT(openTempFolder()));
+    QDesktopServices::openUrl(QUrl("file:///"+m_currentTempFolder, QUrl::TolerantMode));
+    if(ui->closeAfterResizingCheckBox->isChecked()){
+        this->close();
+    }
+}
+
+void Resizer::zipTempFolder()
+{
+    disconnect(this,SIGNAL(finished()),this,SLOT(zipTempFolder()));
+
+    QString outputFilename = QFileDialog::getSaveFileName(this,tr("Output Zip filename"),QDir::homePath(),"*.zip");
+    if(outputFilename.isEmpty())
+        return;
+
+    if(!outputFilename.endsWith(".zip",Qt::CaseInsensitive)){
+        outputFilename.append(".zip");
+    }
+
+    ZipWriter writer(outputFilename,QIODevice::WriteOnly);
+
+    if(writer.isWritable()){
+        QDir dir(m_currentTempFolder);
+        QStringList files = dir.entryList(QDir::Files);
+
+        QProgressDialog *progress = new QProgressDialog(tr("Compressing..."),QString(),0,files.size()-1,this);
+        progress->setWindowTitle(tr("Create Zip"));
+        progress->setMinimumDuration(1000);
+        progress->show();
+
+        for(int k=0;k<files.size();k++){
+            QString filename = files[k];
+            QString absoluteFilePath = dir.absoluteFilePath(filename);
+            QFile file(absoluteFilePath);
+            if(file.open(QIODevice::ReadOnly)){
+                writer.addFile(filename,file.readAll());
+            }
+            progress->setValue(k);
+        }
+
+        progress->close();
+    }
+
+    if(ui->closeAfterResizingCheckBox->isChecked()){
         this->close();
     }
 }
@@ -666,7 +778,7 @@ void Resizer::resizeFinished()
 bool Resizer::save(ImageSaverInfo info)
 {
     QFileInfo fi(info.filename);
-    QString output = fi.absoluteDir().absolutePath() + QDir::separator() + info.outputFolder + QDir::separator() + fi.fileName();
+    QString output = info.outputFolder + QDir::separator() + fi.fileName();
 
     QDir dir(fi.absoluteDir());
     if(!dir.exists()){

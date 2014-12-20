@@ -20,23 +20,23 @@
 #include <QScrollBar>
 #include <QUrl>
 #include <QMovie>
-
 #include <QSettings>
 #include <QStatusBar>
-
-#include "qexifimageheader/qexifimageheader.h"
-
-#include "positionselector.h"
-
 #include <QtConcurrentMap>
 #include <QFutureWatcher>
 #include <QThreadPool>
+#include <QPluginLoader>
+#include <QTimer>
+#include <QFile>
+
+#include "qexifimageheader/qexifimageheader.h"
+
+#include "zip/zipwriter.h"
+#include "positionselector.h"
 
 #include "imagelabel.h"
 
 #include "plugininterface.h"
-#include <QPluginLoader>
-#include <QTimer>
 
 namespace Ui {
 class Resizer;
@@ -83,6 +83,8 @@ private:
     QString m_version;
     int nbColumns_;
 
+    QString m_currentTempFolder;
+
     QMovie m_loadingMovie;
 
     QFutureWatcher<ImageLoaderInfo> *m_imageLoader;
@@ -119,7 +121,10 @@ public slots:
     void showImage(int);
     void loadFinished();
 
-    void resizeAll();
+    void resizeAll(QString outputFolder = QString());
+    void resizeInFolders();
+    void resizeAndZip();
+    void resizeInTemp();
     void resizeFinished();
 
     void handleMessage(const QString& message);
@@ -159,6 +164,10 @@ public slots:
     void updateStatus();
 
     void progressChanged(int value);
+
+private slots:
+    void openTempFolder();
+    void zipTempFolder();
 
 signals:
     void needToShow();

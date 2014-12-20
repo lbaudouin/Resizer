@@ -15,7 +15,8 @@ SOURCES += main.cpp\
     qexifimageheader/qexifimageheader.cpp \
     resizer.cpp \
     positionselector.cpp \
-    imagelabel.cpp
+    imagelabel.cpp \
+    zip/zip.cpp
 
 HEADERS  += \
     qexifimageheader/qexifimageheader.h \
@@ -23,7 +24,9 @@ HEADERS  += \
     positionselector.h \
     plugininterface.h \
     rotationstate.h \
-    imagelabel.h
+    imagelabel.h \
+    zip/zipreader.h \
+    zip/zipwriter.h
 
 FORMS    += \
     resizer.ui
@@ -45,3 +48,10 @@ OTHER_FILES += \
     resizer.rc \
     TODO \
     win32/Resizer.exe.manifest
+
+contains( QT_CONFIG, system-zlib ) {
+  if( unix|win32-g++* ): LIBS += -lz
+  else: LIBS += zdll.lib
+} else {
+  INCLUDEPATH += $$PWD
+}

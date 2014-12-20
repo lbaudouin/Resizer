@@ -615,15 +615,30 @@
        </widget>
       </item>
       <item>
-       <widget class="QDialogButtonBox" name="buttonBox">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+       <widget class="QPushButton" name="cancelButton">
+        <property name="text">
+         <string>Cancel</string>
         </property>
-        <property name="standardButtons">
-         <set>QDialogButtonBox::Cancel</set>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="tempButton">
+        <property name="text">
+         <string>Tempary folder</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="zipButton">
+        <property name="text">
+         <string>Create Zip</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="resizeButton">
+        <property name="text">
+         <string>Resize</string>
         </property>
        </widget>
       </item>
@@ -656,7 +671,15 @@
     <addaction name="actionHelp"/>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuDisplay">
+    <property name="title">
+     <string>Display</string>
+    </property>
+    <addaction name="actionDisplay_Temporary_button"/>
+    <addaction name="actionDisplay_Zip_button"/>
+   </widget>
    <addaction name="menuMenu"/>
+   <addaction name="menuDisplay"/>
    <addaction name="menu"/>
   </widget>
   <action name="actionAdd_files">
@@ -723,6 +746,22 @@
     <bool>true</bool>
    </property>
   </action>
+  <action name="actionDisplay_Temporary_button">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Display 'Temporary' button</string>
+   </property>
+  </action>
+  <action name="actionDisplay_Zip_button">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Display 'Zip' button</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -737,22 +776,6 @@
   <include location="ressources.qrc"/>
  </resources>
  <connections>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>rejected()</signal>
-   <receiver>Resizer</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>286</x>
-     <y>532</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>155</x>
-     <y>278</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>actionQuit</sender>
    <signal>triggered()</signal>

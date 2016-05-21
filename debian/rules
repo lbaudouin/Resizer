@@ -4,8 +4,8 @@ BUILDDIR = build_dir
 
 # secondly called by launchpad
 build:
-	lrelease *.pro
-	qmake
+	lrelease -qt=qt5 *.pro
+	qmake -qt=qt5
 	make
 
 # thirdly called by launchpad

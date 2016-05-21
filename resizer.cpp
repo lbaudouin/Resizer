@@ -122,31 +122,13 @@ Resizer::Resizer(QWidget *parent) :
     //Loader
     m_imageLoader = new QFutureWatcher<ImageLoaderInfo>(this);
     connect(m_imageLoader, SIGNAL(resultReadyAt(int)), SLOT(showImage(int)));
-
-    m_loadingProgressDialog = new QProgressDialog(tr("Loading..."),tr("Cancel"),0,0,this);
-    m_loadingProgressDialog->setWindowTitle(tr("Please wait"));
-    m_loadingProgressDialog->setModal(true);
-    m_loadingProgressDialog->setMinimumDuration(50);
-
-    connect(m_imageLoader,SIGNAL(progressRangeChanged(int,int)),m_loadingProgressDialog,SLOT(setRange(int,int)));
-    connect(m_imageLoader,SIGNAL(progressValueChanged(int)),m_loadingProgressDialog,SLOT(setValue(int)));
     connect(m_imageLoader,SIGNAL(progressValueChanged(int)),this,SLOT(progressChanged(int)));
-    connect(m_loadingProgressDialog,SIGNAL(canceled()),m_imageLoader,SLOT(cancel()));
     connect(m_imageLoader,SIGNAL(finished()),this,SLOT(loadFinished()));
 
     //Saver
     m_imageSaver = new QFutureWatcher<bool>(this);
-
-    m_resizingProgressDialog = new QProgressDialog(tr("Resizing..."),tr("Cancel"),0,0,this);
-    m_resizingProgressDialog->setWindowTitle(tr("Please wait"));
-    m_loadingProgressDialog->setModal(true);
-    m_resizingProgressDialog->setMinimumDuration(50);
-
-    connect(m_imageSaver,SIGNAL(progressRangeChanged(int,int)),m_resizingProgressDialog,SLOT(setRange(int,int)));
-    connect(m_imageSaver,SIGNAL(progressValueChanged(int)),m_resizingProgressDialog,SLOT(setValue(int)));
-    connect(m_imageSaver,SIGNAL(progressValueChanged(int)),this,SLOT(progressChanged(int)));
-    connect(m_resizingProgressDialog,SIGNAL(canceled()),m_imageSaver,SLOT(cancel()));
     connect(m_imageSaver,SIGNAL(finished()),this,SLOT(resizeFinished()));
+    connect(m_imageSaver,SIGNAL(progressValueChanged(int)),this,SLOT(progressChanged(int)));
 }
 
 Resizer::~Resizer()
@@ -217,7 +199,8 @@ void Resizer::readSettings()
     ui->selector->setPosition( static_cast<PositionSelector::POSITION>(settings.value("logo/attach",3).toInt()) );
     ui->horizontalLineEdit->setText( settings.value("logo/shift-x",25).toString() );
     ui->verticalLineEdit->setText( settings.value("logo/shift-y",25).toString() );
-    m_logoPath = settings.value("logo/path",QDesktopServices::storageLocation(QDesktopServices::PicturesLocation)  + QDir::separator() + "logo.png").toString();
+    QStringList paths = QStandardPaths::standardLocations(QStandardPaths::PicturesLocation);
+    m_logoPath = settings.value("logo/path", (paths.size()>0? paths.first() : QString(".") )  + QDir::separator() + "logo.png").toString();
 
     ui->actionDisplay_Temporary_button->setChecked( settings.value("display/temp",false).toBool() );
     ui->actionDisplay_Zip_button->setChecked( settings.value("display/zip",true).toBool() );
@@ -271,10 +254,17 @@ void Resizer::pressOpenFiles()
 
 void Resizer::addFilesAndFolders(QStringList paths)
 {
+    if(paths.isEmpty())
+        return;
+
+    qDebug() << "Add files and folders: " << paths;
     QStringList absoluteFilepaths;
 
     foreach(QString path, paths){
         QFileInfo fileinfo(path);
+        if(!fileinfo.exists())
+            continue;
+
         if(fileinfo.isDir()){
             QDir dir(fileinfo.absoluteFilePath());
             if(!dir.exists())
@@ -294,6 +284,7 @@ void Resizer::addFilesAndFolders(QStringList paths)
 
 void Resizer::addFiles(QStringList files)
 {
+    qDebug() << "Add files: " << files;
     setUpdatesEnabled(false);
 
     QStringList filesToLoad;
@@ -330,12 +321,22 @@ void Resizer::addFiles(QStringList files)
         filesToLoad << fi.absoluteFilePath();
     }
 
+    if(filesToLoad.isEmpty())
+        return;
+
     QThreadPool::globalInstance()->setMaxThreadCount(ui->numberOfThreadsSpinBox->value());
 
-    m_imageLoader->setFuture(QtConcurrent::mapped(filesToLoad, load));
-    m_loadingProgressDialog->show();
+    m_loadingProgressDialog = new QProgressDialog(tr("Loading..."),tr("Cancel"),0,0,this);
+    connect(m_imageLoader,SIGNAL(progressRangeChanged(int,int)),m_loadingProgressDialog,SLOT(setRange(int,int)));
+    connect(m_imageLoader,SIGNAL(progressValueChanged(int)),m_loadingProgressDialog,SLOT(setValue(int)));
+    connect(m_loadingProgressDialog,SIGNAL(canceled()),m_imageLoader,SLOT(cancel()));
 
-    //Update status
+    m_loadingProgressDialog->setWindowTitle(tr("Please wait"));
+    m_loadingProgressDialog->setModal(true);
+    m_loadingProgressDialog->setMinimumDuration(50);
+
+    m_imageLoader->setFuture(QtConcurrent::mapped(filesToLoad, load));
+
     updateStatus();
 }
 
@@ -709,10 +710,16 @@ void Resizer::resizeAll(QString outputFolder)
 
     QThreadPool::globalInstance()->setMaxThreadCount(ui->numberOfThreadsSpinBox->value());
 
-    m_imageSaver->setFuture(QtConcurrent::mapped(images, save));
+    m_resizingProgressDialog = new QProgressDialog(tr("Resizing..."),tr("Cancel"),0,0,this);
+    connect(m_imageSaver,SIGNAL(progressRangeChanged(int,int)),m_resizingProgressDialog,SLOT(setRange(int,int)));
+    connect(m_imageSaver,SIGNAL(progressValueChanged(int)),m_resizingProgressDialog,SLOT(setValue(int)));
+    connect(m_resizingProgressDialog,SIGNAL(canceled()),m_imageSaver,SLOT(cancel()));
 
-    //WARNING: No modal dialog
-    m_resizingProgressDialog->show();
+    m_resizingProgressDialog->setWindowTitle(tr("Please wait"));
+    m_resizingProgressDialog->setModal(true);
+    m_resizingProgressDialog->setMinimumDuration(50);
+
+    m_imageSaver->setFuture(QtConcurrent::mapped(images, save));
 }
 
 void Resizer::resizeFinished()
@@ -855,9 +862,9 @@ bool Resizer::save(ImageSaverInfo info)
 
     if(info.keepExif){
         QExifImageHeader exif(info.filename);
-        QList<QExifImageHeader::ImageTag> list1 = exif.imageTags();
+        /*QList<QExifImageHeader::ImageTag> list1 = exif.imageTags();
         QList<QExifImageHeader::ExifExtendedTag> list2 = exif.extendedTags();
-        QList<QExifImageHeader::GpsTag> list3 = exif.gpsTags();
+        QList<QExifImageHeader::GpsTag> list3 = exif.gpsTags();*/
 
         /*for(int i=0;i<list1.size();i++){
             qDebug() << exif.value(list1[i]).toString();

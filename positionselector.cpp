@@ -31,11 +31,11 @@ void PositionSelector::mouseMoveEvent(QMouseEvent *e)
 {
     QList< QPair<double,POSITION> > dist;
 
-    dist << QPair<double,POSITION>(QLineF(e->posF(),this->rect().topLeft()).length(),TOP_LEFT);
-    dist << QPair<double,POSITION>(QLineF(e->posF(),this->rect().topRight()).length(),TOP_RIGHT);
-    dist << QPair<double,POSITION>(QLineF(e->posF(),this->rect().bottomLeft()).length(),BOTTOM_LEFT);
-    dist << QPair<double,POSITION>(QLineF(e->posF(),this->rect().bottomRight()).length(),BOTTOM_RIGHT);
-    dist << QPair<double,POSITION>(QLineF(e->posF(),this->rect().center()).length(),CENTER);
+    dist << QPair<double,POSITION>(QLineF(e->pos(),this->rect().topLeft()).length(),TOP_LEFT);
+    dist << QPair<double,POSITION>(QLineF(e->pos(),this->rect().topRight()).length(),TOP_RIGHT);
+    dist << QPair<double,POSITION>(QLineF(e->pos(),this->rect().bottomLeft()).length(),BOTTOM_LEFT);
+    dist << QPair<double,POSITION>(QLineF(e->pos(),this->rect().bottomRight()).length(),BOTTOM_RIGHT);
+    dist << QPair<double,POSITION>(QLineF(e->pos(),this->rect().center()).length(),CENTER);
 
     qSort(dist.begin(),dist.end());
 

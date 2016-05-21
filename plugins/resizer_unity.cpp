@@ -50,4 +50,4 @@ void ResizerUnity::finished()
     loop->exec();
 }
 
-Q_EXPORT_PLUGIN2(resizer-plugin-unity, ResizerUnity)
+//Q_EXPORT_PLUGIN2(resizer-plugin-unity, ResizerUnity)

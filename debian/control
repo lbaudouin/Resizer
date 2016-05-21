@@ -2,12 +2,14 @@ Source: resizer
 Section: graphics
 Priority: optional
 Maintainer: Léo Baudouin <baudouin.leo@gmail.com>
-Build-Depends: build-essential, libqt4-dev, qt4-qmake
-Standards-Version: 3.9.3
+Build-Depends: debhelper (>= 9),
+               qtbase5-dev (>= 5.4.1+dfsg~),
+               qttools5-dev-tools (>= 5.4.1~),
+Standards-Version: 3.9.6
 Homepage: http://lbaudouin.fr/
 
 Package: resizer
 Architecture: any
-Depends: libqtcore4,libqtgui4
+Depends: libqt5core5a, libqt5gui5,  libqt5widgets5, libqt5concurrent5
 Suggests: resizer-plugin-unity
 Description: Resize images

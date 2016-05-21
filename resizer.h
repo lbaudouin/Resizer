@@ -22,7 +22,7 @@
 #include <QMovie>
 #include <QSettings>
 #include <QStatusBar>
-#include <QtConcurrentMap>
+#include <QtConcurrent>
 #include <QFutureWatcher>
 #include <QThreadPool>
 #include <QPluginLoader>

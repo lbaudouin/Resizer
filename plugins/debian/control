@@ -2,11 +2,13 @@ Source: resizer-plugin-unity
 Section: graphics
 Priority: optional
 Maintainer: Léo Baudouin <baudouin.leo@gmail.com>
-Build-Depends: build-essential, libqt4-dev, qt4-qmake, libunity-dev
-Standards-Version: 3.9.3
+Build-Depends: debhelper (>= 9),
+               qtbase5-dev (>= 5.4.1+dfsg~),
+               libunity-dev,
+Standards-Version: 3.9.6
 Homepage: http://lbaudouin.fr/
 
 Package: resizer-plugin-unity
 Architecture: any
-Depends: libqtcore4,libqtgui4,libunity9,resizer
+Depends: libqtcore5,libqtgui5,libunity9,resizer
 Description: Plugin for unity integration with resizer software
